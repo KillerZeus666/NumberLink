@@ -5,6 +5,7 @@
 import sys
 import os
 
+# ESTAS FUNCIONES DEBEN ESTAR FUERA DEL if __name__ == "__main__"
 def leer_tablero(ruta_archivo):
     """
     Lee un archivo de texto con el formato del tablero Numberlink.
@@ -49,14 +50,14 @@ def imprimir_tablero(tablero):
 # --- Ejecución principal ---
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print("❌ Uso: python leer_tablero.py <ruta_del_archivo>")
+        print("Uso: python leer_tablero.py <ruta_del_archivo>")
         sys.exit(1)
 
     ruta = sys.argv[1]
 
     try:
         tablero = leer_tablero(ruta)
-        print(f"✅ Tablero leído correctamente desde: {ruta}\n")
+        print(f"Tablero leído correctamente desde: {ruta}\n")
         imprimir_tablero(tablero)
     except Exception as e:
-        print(f"❌ Error al leer el archivo: {e}")
+        print(f"Error al leer el archivo: {e}")
