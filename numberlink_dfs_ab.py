@@ -13,7 +13,7 @@ from collections import deque
 import math
 
 MAX_CAMINOS_POR_PAR = 10000  # para búsqueda estándar
-MAX_CAMINOS_MINIMAX = 6000   # para búsqueda max/max (sin adversario)
+MAX_CAMINOS_MINIMAX = 10000   # para búsqueda max/max (sin adversario)
 PUNTUACION_SOLUCION = 1_000_000
 
 def encontrar_pares(tablero):

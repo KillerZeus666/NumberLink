@@ -8,9 +8,10 @@ from collections import deque
 """
 Estrategia: En cada paso elige el siguiente par más “restringido” (el que tiene menos 
 caminos disponibles en el tablero actual), genera hasta 10 000 caminos para ese par 
-y antes de seguir recursando verifica que los pares restantes aún tengan al menos un camino accesible. 
+y antes de seguir recursando verifica conectividad y paridad de componentes libres, además 
+de que los pares restantes aún tengan al menos un camino accesible. Poda estados que dejan 
+extremos en componentes distintas o islas sin extremos.
 """
-# generación amplia de caminos y poda de estados sin conectividad para los pares restantes.
 
 def encontrar_pares(tablero):
     """Encuentra todos los pares de números en el tablero."""
@@ -157,6 +158,65 @@ def desmarcar_camino(tablero, camino, numero):
         tablero[pos[0]][pos[1]] = ' '
 
 
+def analizar_componentes(tablero, pares_restantes):
+    """
+    Poda por componentes: las celdas transitables son espacios y los extremos pendientes.
+    - Cada componente debe tener un número par de extremos y no quedarse sin extremos si hay huecos.
+    - Los extremos de cada par deben estar en la misma componente.
+    """
+    filas, cols = len(tablero), len(tablero[0])
+    extremos = set()
+    for _, p1, p2 in pares_restantes:
+        extremos.add(p1)
+        extremos.add(p2)
+
+    comp_id = [[-1] * cols for _ in range(filas)]
+    comp_info = []
+
+    def es_transitable(pos):
+        return tablero[pos[0]][pos[1]] == ' ' or pos in extremos
+
+    def bfs(inicio, comp_idx):
+        q = deque([inicio])
+        comp_id[inicio[0]][inicio[1]] = comp_idx
+        libres = 0
+        ends = 0
+        while q:
+            i, j = q.popleft()
+            if (i, j) in extremos:
+                ends += 1
+            elif tablero[i][j] == ' ':
+                libres += 1
+            for ni, nj in obtener_vecinos((i, j), filas, cols):
+                if comp_id[ni][nj] != -1:
+                    continue
+                if es_transitable((ni, nj)):
+                    comp_id[ni][nj] = comp_idx
+                    q.append((ni, nj))
+        comp_info.append({"libres": libres, "extremos": ends})
+
+    comp_idx = 0
+    for i in range(filas):
+        for j in range(cols):
+            if comp_id[i][j] == -1 and es_transitable((i, j)):
+                bfs((i, j), comp_idx)
+                comp_idx += 1
+
+    # Reglas de paridad y alcance de pares
+    for info in comp_info:
+        if info["libres"] > 0 and info["extremos"] == 0:
+            return False
+        if info["extremos"] % 2 == 1:
+            return False
+
+    # Cada extremo de un par debe estar en la misma componente
+    for _, p1, p2 in pares_restantes:
+        if comp_id[p1[0]][p1[1]] != comp_id[p2[0]][p2[1]]:
+            return False
+
+    return True
+
+
 def hay_camino_para_pares(tablero, pares):
     """
     Verifica que cada par pendiente tenga al menos un camino posible.
@@ -219,7 +279,7 @@ def resolver_numberlink_backtracking(tablero_original, verbose=True, max_caminos
         for camino in caminos[:max_caminos_por_par]:
             marcar_camino(tablero, camino, numero)
             # Poda: asegurar que los pares pendientes sigan conectables
-            if hay_camino_para_pares(tablero, restantes):
+            if analizar_componentes(tablero, restantes) and hay_camino_para_pares(tablero, restantes):
                 if backtrack(restantes):
                     return True
             desmarcar_camino(tablero, camino, numero)

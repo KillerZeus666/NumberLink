@@ -14,7 +14,7 @@ import copy
 import heapq
 from collections import deque
 
-MAX_CAMINOS_POR_PAR = 10000
+MAX_CAMINOS_POR_PAR = 15000
 
 def encontrar_pares(tablero):
     """Encuentra todos los pares de números en el tablero."""
