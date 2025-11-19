@@ -3,6 +3,8 @@
 # Descripción: Resuelve tableros NumberLink usando backtracking con heurística de bordes
 
 import copy
+import os
+import time
 from collections import deque
 from itertools import islice
 
@@ -367,26 +369,32 @@ class NumberLinkHeuristicSolver:
 if __name__ == "__main__":
     from leer_tablero import NumberLinkBoardIO
     import sys
-
+    
     if len(sys.argv) < 2:
         print("Uso: python solucionador_backtracking.py <ruta_del_archivo>")
         sys.exit(1)
-
+    
     ruta = sys.argv[1]
-
+    
     try:
         tablero = NumberLinkBoardIO.leer_tablero(ruta)
-
+        
         print("=== TABLERO ORIGINAL ===")
         NumberLinkBoardIO.imprimir_tablero(tablero)
-
+        
         pares = NumberLinkHeuristicSolver.encontrar_pares(tablero)
         print(f"\nPares a conectar: {len(pares)}")
         for num, posiciones in sorted(pares.items()):
             print(f"  '{num}': {posiciones[0]} ↔ {posiciones[1]}")
 
-        solucion, completa = NumberLinkHeuristicSolver.resolver_numberlink_backtracking(tablero, verbose=True)
+        filas = len(tablero)
+        cols = len(tablero[0]) if filas else 0
+        ruta_salida = os.path.join("tablerosSalida", f"salida{filas}x{cols}.txt")
 
+        inicio = time.perf_counter()
+        solucion, completa = NumberLinkHeuristicSolver.resolver_numberlink_backtracking(tablero, verbose=True)
+        duracion = time.perf_counter() - inicio
+        
         if completa:
             print("\n=== TABLERO RESUELTO ===")
             NumberLinkHeuristicSolver.imprimir_tablero(solucion)
@@ -395,6 +403,10 @@ if __name__ == "__main__":
             NumberLinkHeuristicSolver.imprimir_tablero(solucion)
             print("\nNo se pudo encontrar una solución completa.")
 
+        NumberLinkBoardIO.guardar_resultado(solucion, ruta_salida, "Backtracking Heurístico", duracion, completa)
+        print(f"\nTiempo de resolución: {duracion:.4f} s")
+        print(f"Resultado guardado en: {ruta_salida}")
+        
     except Exception as e:
         print(f"Error: {e}")
         import traceback

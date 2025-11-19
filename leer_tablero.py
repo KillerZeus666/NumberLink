@@ -49,6 +49,27 @@ class NumberLinkBoardIO:
         for fila in tablero:
             print(''.join(fila))
 
+    @staticmethod
+    def tablero_a_texto(tablero):
+        return '\n'.join(''.join(fila) for fila in tablero)
+
+    @staticmethod
+    def guardar_resultado(tablero, ruta_salida, nombre_solver, tiempo_segundos, completa):
+        if not ruta_salida:
+            return
+        directorio = os.path.dirname(ruta_salida)
+        if directorio:
+            os.makedirs(directorio, exist_ok=True)
+        contenido = [
+            f"Solver: {nombre_solver}",
+            f"Tiempo: {tiempo_segundos:.4f} s",
+            f"Completado: {'sí' if completa else 'no'}",
+            "",
+            NumberLinkBoardIO.tablero_a_texto(tablero)
+        ]
+        with open(ruta_salida, 'w', encoding='utf-8') as archivo:
+            archivo.write('\n'.join(contenido))
+
 
 # --- Ejecución principal ---
 if __name__ == "__main__":

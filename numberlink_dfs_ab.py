@@ -9,8 +9,10 @@
 
 import copy
 import heapq
-from collections import deque
 import math
+import os
+import time
+from collections import deque
 
 MAX_CAMINOS_POR_PAR = 10000  # para búsqueda estándar
 MAX_CAMINOS_MINIMAX = 10000   # para búsqueda max/max (sin adversario)
@@ -385,7 +387,7 @@ def imprimir_tablero(tablero):
 # --- Ejemplo de uso ---
 if __name__ == "__main__":
     from leer_tablero import NumberLinkBoardIO
-    from verificar_tablero import verificar_tablero
+    from verificar_tablero import NumberLinkVerifier
     import sys
     
     if len(sys.argv) < 2:
@@ -407,14 +409,23 @@ if __name__ == "__main__":
             print(f"  '{num}': {posiciones[0]} ↔ {posiciones[1]}")
         
         # Resolver con minimax
+        filas = len(tablero)
+        cols = len(tablero[0]) if filas else 0
+        ruta_salida = os.path.join("tablerosSalida", f"salida{filas}x{cols}.txt")
+
+        inicio = time.perf_counter()
         solucion, completa = resolver_numberlink_minimax(tablero, verbose=True, profundidad=None, max_caminos_por_par=MAX_CAMINOS_MINIMAX)
+        duracion = time.perf_counter() - inicio
         
         print("\n=== TABLERO RESULTADO (MINIMAX) ===")
         imprimir_tablero(solucion)
         
         print("\n=== VERIFICACIÓN ===")
-        verificar_tablero(solucion)
+        NumberLinkVerifier.verificar_tablero(solucion)
         
+        NumberLinkBoardIO.guardar_resultado(solucion, ruta_salida, "DFS Alfa-Beta", duracion, completa)
+        print(f"\nTiempo de resolución: {duracion:.4f} s")
+        print(f"Resultado guardado en: {ruta_salida}")
         if not completa:
             print("\nNo se encontró solución completa con minimax.")
         
