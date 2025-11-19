@@ -320,7 +320,7 @@ if __name__ == "__main__":
             print(f"  '{num}': {posiciones[0]} ↔ {posiciones[1]}")
         
         # Resolver con A*
-        solucion, completa = resolver_numberlink_a_star(tablero, verbose=True, max_caminos_por_par=10000)
+        solucion, completa = resolver_numberlink_a_star(tablero, verbose=True, max_caminos_por_par=MAX_CAMINOS_POR_PAR)
         
         print("\n=== TABLERO RESULTADO (A*) ===")
         imprimir_tablero(solucion)
