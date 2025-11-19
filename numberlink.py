@@ -456,7 +456,7 @@ def imprimir_tablero(tablero):
 
 # --- Ejemplo de uso ---
 if __name__ == "__main__":
-    from leer_tablero import leer_tablero
+    from leer_tablero import NumberLinkBoardIO
     from verificar_tablero import verificar_tablero
     import sys
     
@@ -467,7 +467,7 @@ if __name__ == "__main__":
     ruta = sys.argv[1]
     
     try:
-        tablero = leer_tablero(ruta)
+        tablero = NumberLinkBoardIO.leer_tablero(ruta)
         
         print("=== TABLERO ORIGINAL ===")
         imprimir_tablero(tablero)

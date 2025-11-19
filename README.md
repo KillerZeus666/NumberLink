@@ -20,16 +20,15 @@ Cada script se puede ejecutar por separado desde la carpeta `NumberLink` pasando
 
 - `leer_tablero.py`: Lee y muestra el tablero.  
   ```bash
-  python leer_tablero.py tablerosEntrada/tableroSimple.txt
+  python leer_tablero.py tablerosEntrada/entrada9_2x3.txt
   ```
 
 - `numberlink.py`: Resuelve el tablero con backtracking y muestra el resultado.  
   ```bash
-  python numberlink.py tablerosEntrada/tableroSimple.txt
+  python numberlink.py tablerosEntrada/entrada9_2x3.txt
   ```
 
 - `verificar_tablero.py`: Valida que un tablero (solución propuesta) cumpla las reglas.  
   ```bash
   python verificar_tablero.py tablerosSalida/solucion1_ejemplo.txt
   ```
-
