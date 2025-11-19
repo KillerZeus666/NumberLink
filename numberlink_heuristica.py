@@ -4,6 +4,12 @@
 
 import copy
 from collections import deque
+from itertools import islice
+
+MAX_CAMINOS_PAR = 10000
+MAX_CANDIDATOS_PARES = 3
+MAX_CAMINOS_CHECK = 10000
+mem_tablero = {}
 
 """
 Estrategia: En cada paso elige el siguiente par más “restringido” (el que tiene menos 
@@ -102,7 +108,7 @@ def obtener_vecinos(pos, filas, cols):
     return vecinos
 
 
-def encontrar_todos_caminos(tablero_trabajo, inicio, fin, numero, max_caminos=10000):
+def encontrar_todos_caminos(tablero_trabajo, inicio, fin, numero, max_caminos=MAX_CAMINOS_PAR):
     """
     Encuentra TODOS los caminos posibles desde inicio hasta fin.
     Retorna una lista de caminos ordenados por longitud.
@@ -140,6 +146,32 @@ def encontrar_todos_caminos(tablero_trabajo, inicio, fin, numero, max_caminos=10
     todos_caminos.sort(key=lambda c: len(c))
     
     return todos_caminos
+
+
+def generar_caminos_incremental(tablero_trabajo, inicio, fin, max_caminos=MAX_CAMINOS_PAR):
+    """
+    Generador BFS que produce caminos desde origen a destino priorizando los más cortos.
+    """
+    filas = len(tablero_trabajo)
+    cols = len(tablero_trabajo[0])
+    cola = deque([[inicio]])
+    generados = 0
+
+    while cola and generados < max_caminos:
+        camino = cola.popleft()
+        pos_actual = camino[-1]
+
+        if pos_actual == fin:
+            generados += 1
+            yield camino
+            continue
+
+        for vecino in obtener_vecinos(pos_actual, filas, cols):
+            if vecino in camino:
+                continue
+            celda = tablero_trabajo[vecino[0]][vecino[1]]
+            if celda == ' ' or vecino == fin:
+                cola.append(camino + [vecino])
 
 
 def marcar_camino(tablero, camino, numero):
@@ -217,31 +249,93 @@ def analizar_componentes(tablero, pares_restantes):
     return True
 
 
+def detectar_cuellos(tablero, pares_restantes):
+    """
+    Detecta celdas libres con grado <= 1 que no son extremos pendientes.
+    """
+    if not pares_restantes:
+        return False
+
+    filas, cols = len(tablero), len(tablero[0])
+    extremos = set()
+    for _, p1, p2 in pares_restantes:
+        extremos.add(p1)
+        extremos.add(p2)
+
+    for i in range(filas):
+        for j in range(cols):
+            if tablero[i][j] != ' ':
+                continue
+            if (i, j) in extremos:
+                continue
+            vecinos_libres = 0
+            for ni, nj in obtener_vecinos((i, j), filas, cols):
+                if tablero[ni][nj] == ' ' or (ni, nj) in extremos:
+                    vecinos_libres += 1
+            if vecinos_libres <= 1:
+                return True
+    return False
+
+
+def existe_camino_basico(tablero, inicio, fin):
+    """Comprueba conectividad simple mediante BFS."""
+    filas = len(tablero)
+    cols = len(tablero[0])
+    visitados = set([inicio])
+    cola = deque([inicio])
+
+    while cola:
+        i, j = cola.popleft()
+        if (i, j) == fin:
+            return True
+        for ni, nj in obtener_vecinos((i, j), filas, cols):
+            if (ni, nj) in visitados:
+                continue
+            celda = tablero[ni][nj]
+            if celda == ' ' or (ni, nj) == fin:
+                visitados.add((ni, nj))
+                cola.append((ni, nj))
+    return False
+
+
 def hay_camino_para_pares(tablero, pares):
     """
-    Verifica que cada par pendiente tenga al menos un camino posible.
-    Usa un límite pequeño porque solo queremos saber si existe.
+    Verifica que cada par pendiente tenga al menos un camino posible mediante BFS.
     """
-    for numero, pos1, pos2 in pares:
-        caminos = encontrar_todos_caminos(tablero, pos1, pos2, numero, max_caminos=10000)
-        if not caminos:
+    for _, pos1, pos2 in pares[:MAX_CAMINOS_CHECK]:
+        if not existe_camino_basico(tablero, pos1, pos2):
             return False
     return True
 
 
-def elegir_par_mas_restringido(tablero, pares):
+def tablero_a_clave(tablero):
+    return ''.join(''.join(fila) for fila in tablero)
+
+
+def obtener_candidatos_pares(tablero, pares, max_candidatos=MAX_CANDIDATOS_PARES, max_caminos=MAX_CAMINOS_PAR):
     """
-    Selecciona el par con menos caminos disponibles en el estado actual.
-    Devuelve (indice, caminos).
+    Obtiene hasta max_candidatos pares ordenados por cantidad de caminos disponibles.
+    Cada camino se genera incrementalmente para priorizar rutas cortas.
     """
-    mejor_idx = None
-    mejores_caminos = None
+    clave_tablero = tablero_a_clave(tablero)
+    cache_tablero = mem_tablero.setdefault(clave_tablero, {})
+    opciones = []
     for idx, (numero, p1, p2) in enumerate(pares):
-        caminos = encontrar_todos_caminos(tablero, p1, p2, numero, max_caminos=10000)
-        if mejores_caminos is None or len(caminos) < len(mejores_caminos):
-            mejores_caminos = caminos
-            mejor_idx = idx
-    return mejor_idx, mejores_caminos or []
+        if numero in cache_tablero:
+            caminos = cache_tablero[numero]
+        else:
+            generador = generar_caminos_incremental(tablero, p1, p2, max_caminos=max_caminos)
+            caminos = list(islice(generador, max_caminos))
+            cache_tablero[numero] = caminos
+        if not caminos:
+            continue
+        opciones.append((len(caminos), idx, caminos))
+
+    opciones.sort(key=lambda x: x[0])
+    candidatos = []
+    for _, idx, caminos in opciones[:max_candidatos]:
+        candidatos.append((idx, caminos))
+    return candidatos
 
 
 def resolver_numberlink_backtracking(tablero_original, verbose=True, max_caminos_por_par=10000):
@@ -268,21 +362,25 @@ def resolver_numberlink_backtracking(tablero_original, verbose=True, max_caminos
                     return False
             return True
         
-        # Elegir siguiente par más restringido
-        idx_sel, caminos = elegir_par_mas_restringido(tablero, pares_restantes)
-        if verbose and len(pares_restantes) == len(pares_ordenados):
-            print(f"Conectando '{pares_restantes[idx_sel][0]}': {len(caminos)} caminos candidatos")
+        candidatos = obtener_candidatos_pares(tablero, pares_restantes, max_candidatos=MAX_CANDIDATOS_PARES, max_caminos=max_caminos_por_par)
+        if not candidatos:
+            return False
 
-        numero, pos1, pos2 = pares_restantes[idx_sel]
-        restantes = pares_restantes[:idx_sel] + pares_restantes[idx_sel+1:]
+        for idx_sel, caminos in candidatos:
+            if verbose and len(pares_restantes) == len(pares_ordenados):
+                print(f"Conectando '{pares_restantes[idx_sel][0]}': {len(caminos)} caminos candidatos")
 
-        for camino in caminos[:max_caminos_por_par]:
-            marcar_camino(tablero, camino, numero)
-            # Poda: asegurar que los pares pendientes sigan conectables
-            if analizar_componentes(tablero, restantes) and hay_camino_para_pares(tablero, restantes):
-                if backtrack(restantes):
-                    return True
-            desmarcar_camino(tablero, camino, numero)
+            numero, pos1, pos2 = pares_restantes[idx_sel]
+            restantes = pares_restantes[:idx_sel] + pares_restantes[idx_sel+1:]
+
+            limite_caminos = min(len(caminos), max_caminos_por_par)
+            for camino in caminos[:limite_caminos]:
+                marcar_camino(tablero, camino, numero)
+                # Poda: asegurar que los pares pendientes sigan conectables
+                if analizar_componentes(tablero, restantes) and hay_camino_para_pares(tablero, restantes):
+                    if backtrack(restantes):
+                        return True
+                desmarcar_camino(tablero, camino, numero)
         return False
     
     if backtrack(pares_ordenados):
