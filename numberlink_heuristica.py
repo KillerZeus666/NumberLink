@@ -223,7 +223,7 @@ def hay_camino_para_pares(tablero, pares):
     Usa un límite pequeño porque solo queremos saber si existe.
     """
     for numero, pos1, pos2 in pares:
-        caminos = encontrar_todos_caminos(tablero, pos1, pos2, numero, max_caminos=2000)
+        caminos = encontrar_todos_caminos(tablero, pos1, pos2, numero, max_caminos=10000)
         if not caminos:
             return False
     return True

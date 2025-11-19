@@ -14,7 +14,7 @@ import copy
 import heapq
 from collections import deque
 
-MAX_CAMINOS_POR_PAR = 15000
+MAX_CAMINOS_POR_PAR = 2000
 
 def encontrar_pares(tablero):
     """Encuentra todos los pares de números en el tablero."""
@@ -145,6 +145,33 @@ def encontrar_todos_caminos(tablero_trabajo, inicio, fin, numero, max_caminos=MA
     return todos_caminos
 
 
+def generar_caminos_incremental(tablero_trabajo, inicio, fin, max_caminos=MAX_CAMINOS_POR_PAR):
+    """
+    Genera caminos utilizando BFS para obtener primero los más cortos.
+    Evita crear toda la lista en memoria.
+    """
+    filas = len(tablero_trabajo)
+    cols = len(tablero_trabajo[0])
+    cola = deque([[inicio]])
+    generados = 0
+
+    while cola and generados < max_caminos:
+        camino = cola.popleft()
+        pos_actual = camino[-1]
+
+        if pos_actual == fin:
+            generados += 1
+            yield camino
+            continue
+
+        for vecino in obtener_vecinos(pos_actual, filas, cols):
+            if vecino in camino:
+                continue
+            celda = tablero_trabajo[vecino[0]][vecino[1]]
+            if celda == ' ' or vecino == fin:
+                cola.append(camino + [vecino])
+
+
 def marcar_camino(tablero, camino, numero):
     """Marca un camino en el tablero."""
     for i, pos in enumerate(camino):
@@ -159,6 +186,79 @@ def desmarcar_camino(tablero, camino, numero):
         if i == 0 or i == len(camino) - 1:
             continue
         tablero[pos[0]][pos[1]] = ' '
+
+
+def evaluar_componentes(tablero, pares_restantes):
+    """
+    Obtiene información de componentes.
+    Retorna (es_valido, penalización_por_componentes).
+    """
+    if not pares_restantes:
+        completo = all(' ' not in fila for fila in tablero)
+        return completo, 0 if completo else float('inf')
+
+    filas, cols = len(tablero), len(tablero[0])
+    extremos = set()
+    for _, p1, p2 in pares_restantes:
+        extremos.add(p1)
+        extremos.add(p2)
+
+    comp_id = [[-1] * cols for _ in range(filas)]
+    comp_info = []
+
+    def es_transitable(pos):
+        return tablero[pos[0]][pos[1]] == ' ' or pos in extremos
+
+    def bfs(inicio, comp_idx):
+        q = deque([inicio])
+        comp_id[inicio[0]][inicio[1]] = comp_idx
+        libres = 0
+        extremos_comp = 0
+        while q:
+            i, j = q.popleft()
+            if (i, j) in extremos:
+                extremos_comp += 1
+            elif tablero[i][j] == ' ':
+                libres += 1
+            for ni, nj in obtener_vecinos((i, j), filas, cols):
+                if comp_id[ni][nj] != -1:
+                    continue
+                if es_transitable((ni, nj)):
+                    comp_id[ni][nj] = comp_idx
+                    q.append((ni, nj))
+        comp_info.append({"libres": libres, "extremos": extremos_comp})
+
+    comp_idx = 0
+    for i in range(filas):
+        for j in range(cols):
+            if comp_id[i][j] == -1 and es_transitable((i, j)):
+                bfs((i, j), comp_idx)
+                comp_idx += 1
+
+    componentes_con_extremos = 0
+    for info in comp_info:
+        if info["libres"] > 0 and info["extremos"] == 0:
+            return False, float('inf')
+        if info["extremos"] % 2 == 1:
+            return False, float('inf')
+        if info["extremos"] > 0:
+            componentes_con_extremos += 1
+
+    for _, p1, p2 in pares_restantes:
+        if comp_id[p1[0]][p1[1]] != comp_id[p2[0]][p2[1]]:
+            return False, float('inf')
+
+    penalizacion = max(0, componentes_con_extremos - 1)
+    return True, penalizacion
+
+
+def analizar_componentes(tablero, pares_restantes):
+    """
+    Analiza componentes de celdas libres + extremos pendientes y retorna si el estado es válido.
+    """
+    valido, _ = evaluar_componentes(tablero, pares_restantes)
+    return valido
+
 
 
 def resolver_numberlink_backtracking(tablero_original, verbose=True, max_caminos_por_par=10000):
@@ -217,12 +317,20 @@ def resolver_numberlink_backtracking(tablero_original, verbose=True, max_caminos
         return tablero, False
 
 
-def heuristica_restante(pares_ordenados, idx):
+def heuristica_distancia(pares_restantes):
     """Suma una cota inferior de celdas a rellenar para los pares restantes."""
-    h = 0
-    for _, p1, p2 in pares_ordenados[idx:]:
-        h += max(0, calcular_distancia_manhattan(p1, p2) - 1)
-    return h
+    return sum(max(0, calcular_distancia_manhattan(p1, p2) - 1) for _, p1, p2 in pares_restantes)
+
+
+def contar_celdas_libres(tablero):
+    return sum(1 for fila in tablero for celda in fila if celda == ' ')
+
+
+def heuristica_total(tablero, pares_restantes, penalizacion_componentes=0):
+    """Combina distancia mínima con penalizaciones suaves."""
+    return (heuristica_distancia(pares_restantes) +
+            penalizacion_componentes * 5 +
+            contar_celdas_libres(tablero))
 
 
 def contar_celdas_ocupadas(tablero):
@@ -231,6 +339,15 @@ def contar_celdas_ocupadas(tablero):
 
 def tablero_a_clave(tablero):
     return ''.join(''.join(fila) for fila in tablero)
+
+
+def pares_con_camino(tablero, pares, limite=200):
+    """Verifica rápidamente que cada par tenga al menos un camino posible."""
+    for numero, p1, p2 in pares:
+        caminos = encontrar_todos_caminos(tablero, p1, p2, numero, max_caminos=limite)
+        if not caminos:
+            return False
+    return True
 
 
 def resolver_numberlink_a_star(tablero_original, verbose=True, max_caminos_por_par=10000):
@@ -249,8 +366,34 @@ def resolver_numberlink_a_star(tablero_original, verbose=True, max_caminos_por_p
     mejor_g = {}
     estado_id = 0
 
+    if not analizar_componentes(tablero_inicial, pares_ordenados):
+        if verbose:
+            print("Estado inicial inválido por componentes.")
+        return tablero_original, False
+
+    if not pares_con_camino(tablero_inicial, pares_ordenados):
+        if verbose:
+            print("Estado inicial inválido: algún par no tiene caminos.")
+        return tablero_original, False
+
     g0 = contar_celdas_ocupadas(tablero_inicial)
-    h0 = heuristica_restante(pares_ordenados, 0)
+    component_cache = {}
+
+    def validar_componentes(idx_local, tablero_actual, pares_restantes):
+        clave = (idx_local, tablero_a_clave(tablero_actual))
+        if clave in component_cache:
+            return component_cache[clave]
+        valido, penalizacion = evaluar_componentes(tablero_actual, pares_restantes)
+        component_cache[clave] = (valido, penalizacion)
+        return component_cache[clave]
+
+    valido_inicial, penalizacion_inicial = validar_componentes(0, tablero_inicial, pares_ordenados)
+    if not valido_inicial:
+        if verbose:
+            print("Estado inicial inválido tras evaluación detallada.")
+        return tablero_original, False
+
+    h0 = heuristica_total(tablero_inicial, pares_ordenados, penalizacion_inicial)
     heapq.heappush(heap, (g0 + h0, h0, estado_id, 0, g0, tablero_inicial))
     mejor_g[(0, tablero_a_clave(tablero_inicial))] = g0
 
@@ -265,12 +408,11 @@ def resolver_numberlink_a_star(tablero_original, verbose=True, max_caminos_por_p
             continue
 
         numero, pos1, pos2 = pares_ordenados[idx]
-        caminos = encontrar_todos_caminos(tablero, pos1, pos2, numero, max_caminos=max_caminos_por_par)
+        caminos_iter = generar_caminos_incremental(tablero, pos1, pos2, max_caminos=max_caminos_por_par)
+        caminos_procesados = 0
 
-        if verbose and idx == 0:
-            print(f"Conectando '{numero}' con {len(caminos)} caminos candidatos (A*)")
-
-        for camino in caminos:
+        for camino in caminos_iter:
+            caminos_procesados += 1
             # Crear nuevo tablero con el camino marcado
             nuevo_tablero = copy.deepcopy(tablero)
             nuevas_celdas = 0
@@ -280,8 +422,14 @@ def resolver_numberlink_a_star(tablero_original, verbose=True, max_caminos_por_p
             marcar_camino(nuevo_tablero, camino, numero)
 
             nuevo_idx = idx + 1
+            restantes = pares_ordenados[nuevo_idx:]
+
+            valido_componentes, penalizacion_componentes = validar_componentes(nuevo_idx, nuevo_tablero, restantes)
+            if not valido_componentes:
+                continue
+
             nuevo_g = g_actual + nuevas_celdas
-            nuevo_h = heuristica_restante(pares_ordenados, nuevo_idx)
+            nuevo_h = heuristica_total(nuevo_tablero, restantes, penalizacion_componentes)
             nueva_clave = tablero_a_clave(nuevo_tablero)
 
             clave_estado = (nuevo_idx, nueva_clave)
@@ -291,6 +439,9 @@ def resolver_numberlink_a_star(tablero_original, verbose=True, max_caminos_por_p
 
             estado_id += 1
             heapq.heappush(heap, (nuevo_g + nuevo_h, nuevo_h, estado_id, nuevo_idx, nuevo_g, nuevo_tablero))
+
+        if verbose and idx == 0:
+            print(f"Conectando '{numero}' con {caminos_procesados} caminos candidatos (A*)")
 
     if verbose:
         print("\n✗ A* no encontró solución")
