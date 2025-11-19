@@ -2,19 +2,15 @@
 # Autor: Katheryn Guasca
 # Descripción: Resuelve tableros NumberLink usando backtracking con heurística de bordes
 
-"""
- Usa A* como motor principal. Genera muchos caminos posibles para cada par, 
- los ordena con una heurística que prioriza pares en esquinas/bordes y distancias 
- cortas, y luego explora estados (tableros parciales) con A*. En A*, g es el número 
- de celdas ya ocupadas y h es la suma de distancias Manhattan mínimas que quedan por
- cubrir; con f=g+h el algoritmo siempre expande el estado aparentemente más prometedor
-"""
-
 import copy
-import heapq
 from collections import deque
 
-MAX_CAMINOS_POR_PAR = 10000
+"""
+Estrategia: En cada paso elige el siguiente par más “restringido” (el que tiene menos 
+caminos disponibles en el tablero actual), genera hasta 10 000 caminos para ese par 
+y antes de seguir recursando verifica que los pares restantes aún tengan al menos un camino accesible. 
+"""
+# generación amplia de caminos y poda de estados sin conectividad para los pares restantes.
 
 def encontrar_pares(tablero):
     """Encuentra todos los pares de números en el tablero."""
@@ -105,7 +101,7 @@ def obtener_vecinos(pos, filas, cols):
     return vecinos
 
 
-def encontrar_todos_caminos(tablero_trabajo, inicio, fin, numero, max_caminos=MAX_CAMINOS_POR_PAR):
+def encontrar_todos_caminos(tablero_trabajo, inicio, fin, numero, max_caminos=10000):
     """
     Encuentra TODOS los caminos posibles desde inicio hasta fin.
     Retorna una lista de caminos ordenados por longitud.
@@ -161,6 +157,33 @@ def desmarcar_camino(tablero, camino, numero):
         tablero[pos[0]][pos[1]] = ' '
 
 
+def hay_camino_para_pares(tablero, pares):
+    """
+    Verifica que cada par pendiente tenga al menos un camino posible.
+    Usa un límite pequeño porque solo queremos saber si existe.
+    """
+    for numero, pos1, pos2 in pares:
+        caminos = encontrar_todos_caminos(tablero, pos1, pos2, numero, max_caminos=2000)
+        if not caminos:
+            return False
+    return True
+
+
+def elegir_par_mas_restringido(tablero, pares):
+    """
+    Selecciona el par con menos caminos disponibles en el estado actual.
+    Devuelve (indice, caminos).
+    """
+    mejor_idx = None
+    mejores_caminos = None
+    for idx, (numero, p1, p2) in enumerate(pares):
+        caminos = encontrar_todos_caminos(tablero, p1, p2, numero, max_caminos=10000)
+        if mejores_caminos is None or len(caminos) < len(mejores_caminos):
+            mejores_caminos = caminos
+            mejor_idx = idx
+    return mejor_idx, mejores_caminos or []
+
+
 def resolver_numberlink_backtracking(tablero_original, verbose=True, max_caminos_por_par=10000):
     """
     Resuelve el tablero NumberLink usando backtracking.
@@ -175,39 +198,34 @@ def resolver_numberlink_backtracking(tablero_original, verbose=True, max_caminos
     
     intentos = [0]  # Contador de intentos
     
-    def backtrack(idx, caminos_usados):
+    def backtrack(pares_restantes):
         intentos[0] += 1
         
-        if idx == len(pares_ordenados):
+        if not pares_restantes:
             # Verificar que todas las celdas estén llenas
             for fila in tablero:
                 if ' ' in fila:
                     return False
             return True
         
-        numero, pos1, pos2 = pares_ordenados[idx]
-        
-        # Encontrar todos los caminos posibles
-        caminos = encontrar_todos_caminos(tablero, pos1, pos2, numero, max_caminos=max_caminos_por_par)
-        
-        if verbose and idx == 0:
-            print(f"Conectando '{numero}': encontrados {len(caminos)} caminos posibles")
-        
-        # Probar cada camino
-        for camino in caminos:
-            # Marcar el camino
+        # Elegir siguiente par más restringido
+        idx_sel, caminos = elegir_par_mas_restringido(tablero, pares_restantes)
+        if verbose and len(pares_restantes) == len(pares_ordenados):
+            print(f"Conectando '{pares_restantes[idx_sel][0]}': {len(caminos)} caminos candidatos")
+
+        numero, pos1, pos2 = pares_restantes[idx_sel]
+        restantes = pares_restantes[:idx_sel] + pares_restantes[idx_sel+1:]
+
+        for camino in caminos[:max_caminos_por_par]:
             marcar_camino(tablero, camino, numero)
-            
-            # Recursión
-            if backtrack(idx + 1, caminos_usados + [camino]):
-                return True
-            
-            # Deshacer (backtrack)
+            # Poda: asegurar que los pares pendientes sigan conectables
+            if hay_camino_para_pares(tablero, restantes):
+                if backtrack(restantes):
+                    return True
             desmarcar_camino(tablero, camino, numero)
-        
         return False
     
-    if backtrack(0, []):
+    if backtrack(pares_ordenados):
         if verbose:
             print(f"\n✓ Solución encontrada en {intentos[0]} intentos")
         return tablero, True
@@ -215,86 +233,6 @@ def resolver_numberlink_backtracking(tablero_original, verbose=True, max_caminos
         if verbose:
             print(f"\n✗ No se encontró solución después de {intentos[0]} intentos")
         return tablero, False
-
-
-def heuristica_restante(pares_ordenados, idx):
-    """Suma una cota inferior de celdas a rellenar para los pares restantes."""
-    h = 0
-    for _, p1, p2 in pares_ordenados[idx:]:
-        h += max(0, calcular_distancia_manhattan(p1, p2) - 1)
-    return h
-
-
-def contar_celdas_ocupadas(tablero):
-    return sum(1 for fila in tablero for celda in fila if celda != ' ')
-
-
-def tablero_a_clave(tablero):
-    return ''.join(''.join(fila) for fila in tablero)
-
-
-def resolver_numberlink_a_star(tablero_original, verbose=True, max_caminos_por_par=10000):
-    """
-    Resuelve el tablero usando A*.
-    f = g + h, con g = celdas ocupadas y h = Manhattan mínima restante.
-    """
-    tablero_inicial = copy.deepcopy(tablero_original)
-    pares_ordenados = ordenar_pares_por_heuristica(tablero_inicial)
-
-    if verbose:
-        print("\n=== ESTRATEGIA: A* CON HEURÍSTICA DE DISTANCIA ===")
-        print(f"Total de pares a conectar: {len(pares_ordenados)}\n")
-
-    heap = []
-    mejor_g = {}
-    estado_id = 0
-
-    g0 = contar_celdas_ocupadas(tablero_inicial)
-    h0 = heuristica_restante(pares_ordenados, 0)
-    heapq.heappush(heap, (g0 + h0, h0, estado_id, 0, g0, tablero_inicial))
-    mejor_g[(0, tablero_a_clave(tablero_inicial))] = g0
-
-    while heap:
-        f, h_actual, _, idx, g_actual, tablero = heapq.heappop(heap)
-
-        if idx == len(pares_ordenados):
-            if all(' ' not in fila for fila in tablero):
-                if verbose:
-                    print(f"\n✓ Solución encontrada con A* (g={g_actual}, h={h_actual})")
-                return tablero, True
-            continue
-
-        numero, pos1, pos2 = pares_ordenados[idx]
-        caminos = encontrar_todos_caminos(tablero, pos1, pos2, numero, max_caminos=max_caminos_por_par)
-
-        if verbose and idx == 0:
-            print(f"Conectando '{numero}' con {len(caminos)} caminos candidatos (A*)")
-
-        for camino in caminos:
-            # Crear nuevo tablero con el camino marcado
-            nuevo_tablero = copy.deepcopy(tablero)
-            nuevas_celdas = 0
-            for pos in camino[1:-1]:
-                if nuevo_tablero[pos[0]][pos[1]] == ' ':
-                    nuevas_celdas += 1
-            marcar_camino(nuevo_tablero, camino, numero)
-
-            nuevo_idx = idx + 1
-            nuevo_g = g_actual + nuevas_celdas
-            nuevo_h = heuristica_restante(pares_ordenados, nuevo_idx)
-            nueva_clave = tablero_a_clave(nuevo_tablero)
-
-            clave_estado = (nuevo_idx, nueva_clave)
-            if clave_estado in mejor_g and nuevo_g >= mejor_g[clave_estado]:
-                continue
-            mejor_g[clave_estado] = nuevo_g
-
-            estado_id += 1
-            heapq.heappush(heap, (nuevo_g + nuevo_h, nuevo_h, estado_id, nuevo_idx, nuevo_g, nuevo_tablero))
-
-    if verbose:
-        print("\n✗ A* no encontró solución")
-    return tablero_original, False
 
 
 def imprimir_tablero(tablero):
@@ -306,11 +244,10 @@ def imprimir_tablero(tablero):
 # --- Ejemplo de uso ---
 if __name__ == "__main__":
     from leer_tablero import leer_tablero
-    from verificar_tablero import verificar_tablero
     import sys
     
     if len(sys.argv) < 2:
-        print("Uso: python numberlink.py <ruta_del_archivo>")
+        print("Uso: python solucionador_backtracking.py <ruta_del_archivo>")
         sys.exit(1)
     
     ruta = sys.argv[1]
@@ -327,17 +264,16 @@ if __name__ == "__main__":
         for num, posiciones in sorted(pares.items()):
             print(f"  '{num}': {posiciones[0]} ↔ {posiciones[1]}")
         
-        # Resolver con A*
-        solucion, completa = resolver_numberlink_a_star(tablero, verbose=True, max_caminos_por_par=MAX_CAMINOS_POR_PAR)
+        # Resolver con backtracking
+        solucion, completa = resolver_numberlink_backtracking(tablero, verbose=True)
         
-        print("\n=== TABLERO RESULTADO (A*) ===")
-        imprimir_tablero(solucion)
-        
-        print("\n=== VERIFICACIÓN ===")
-        verificar_tablero(solucion)
-        
-        if not completa:
-            print("\nNo se encontró solución completa con A*.")
+        if completa:
+            print("\n=== TABLERO RESUELTO ===")
+            imprimir_tablero(solucion)
+        else:
+            print("\n=== SOLUCIÓN PARCIAL ===")
+            imprimir_tablero(solucion)
+            print("\nNo se pudo encontrar una solución completa.")
         
     except Exception as e:
         print(f"Error: {e}")

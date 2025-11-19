@@ -1,9 +1,10 @@
 """
-“DFS con poda alfa-beta”: es una búsqueda en profundidad (depth-first search) que explora 
-un árbol de decisiones acumulando cotas alpha (mejor valor encontrado) y beta (peor valor aceptable). 
-Si una rama solo puede producir un valor peor que alpha/beta, se corta (“poda”) sin seguir explorando 
-porque no mejorará la solución. Aunque alfa-beta viene de minimax con adversario, 
-aquí se usa igual para evitar explorar caminos que ya están dominados por otros.
+ Implementa una búsqueda en profundidad con poda alfa‑beta, pero sin adversario 
+ (ambos niveles maximizan la misma función de evaluación). Para cada par genera 
+ muchos caminos, marca uno y calcula un valor heurístico: premia estados con más 
+ caminos disponibles para los pares pendientes y penaliza distancias mínimas altas 
+ y espacios vacíos. Alfa‑beta evita explorar ramas que ya no pueden superar la mejor 
+ puntuación encontrada, acelerando la DFS.
 """
 
 import copy
