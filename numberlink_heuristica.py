@@ -1,5 +1,5 @@
 # solucionador_backtracking.py
-# Autor: Katheryn Guasca
+# Autor: Katheryn Guasca, Simon Diaz y Melissa Ruiz 
 # Descripción: Resuelve tableros NumberLink usando backtracking con heurística de bordes
 
 import copy
