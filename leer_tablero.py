@@ -51,10 +51,12 @@ class NumberLinkBoardIO:
 
     @staticmethod
     def tablero_a_texto(tablero):
+        """Convierte el tablero en una cadena multilínea."""
         return '\n'.join(''.join(fila) for fila in tablero)
 
     @staticmethod
     def guardar_resultado(tablero, ruta_salida, nombre_solver, tiempo_segundos, completa):
+        """Persistir tablero y metadatos (tiempo, solver, estado) en un archivo de texto."""
         if not ruta_salida:
             return
         directorio = os.path.dirname(ruta_salida)

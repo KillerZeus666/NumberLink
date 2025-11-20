@@ -4,12 +4,13 @@ from leer_tablero import NumberLinkBoardIO
 
 
 class NumberLinkVerifier:
-    """Valida la estructura de las rutas en un tablero NumberLink."""
+    """Valida la estructura y conectividad de rutas en un tablero NumberLink."""
 
     DIRECCIONES = [(-1, 0), (1, 0), (0, -1), (0, 1)]
 
     @staticmethod
     def obtener_rutas(tablero):
+        """Agrupa coordenadas por símbolo, ignorando espacios y puntos."""
         rutas = {}
         for i, fila in enumerate(tablero):
             for j, celda in enumerate(fila):
@@ -19,6 +20,7 @@ class NumberLinkVerifier:
 
     @classmethod
     def grado(cls, tablero, i, j):
+        """Devuelve el grado (vecinos con mismo símbolo) de una celda."""
         filas = len(tablero)
         cols = len(tablero[0])
         simbolo = tablero[i][j]
@@ -33,6 +35,7 @@ class NumberLinkVerifier:
 
     @classmethod
     def ruta_conectada(cls, tablero, simbolo, posiciones):
+        """Comprueba si todas las celdas de un símbolo forman una ruta continua."""
         inicio = posiciones[0]
         visitado = set([inicio])
         q = deque([inicio])
@@ -52,6 +55,7 @@ class NumberLinkVerifier:
 
     @classmethod
     def verificar_tablero(cls, tablero):
+        """Valida grados, extremos y continuidad de cada ruta en el tablero."""
         rutas = cls.obtener_rutas(tablero)
 
         for simbolo, posiciones in rutas.items():

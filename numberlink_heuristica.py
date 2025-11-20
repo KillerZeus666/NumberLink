@@ -14,21 +14,24 @@ class NumberLinkHeuristicSolver:
     Estrategia: En cada paso elige el siguiente par más “restringido” (el que tiene menos
     caminos disponibles en el tablero actual), genera hasta MAX_CAMINOS_PAR caminos para ese par
     y antes de seguir recursando verifica conectividad, paridad de componentes libres y la inexistencia
-    de cuellos de botella. También valida que los pares restantes sigan teniendo algún camino accesible
-    y usa una caché (mem_tablero) para recordar los caminos ya calculados por tablero.
+    de cuellos de botella (celdas libres no-extremo con grado <= 1). También valida que los pares
+    restantes sigan teniendo algún camino accesible y usa una tabla de memoización (MEMO_TABLERO)
+    para recordar los caminos ya calculados por tablero.
     """
 
     MAX_CAMINOS_PAR = 10000
     MAX_CANDIDATOS_PARES = 3
     MAX_CAMINOS_CHECK = 10000
-    mem_tablero = {}
+    MEMO_TABLERO = {}
 
     @staticmethod
     def tablero_a_clave(tablero):
+        """Convierte el tablero en una cadena lineal para usar como clave del tablero de memoización."""
         return ''.join(''.join(fila) for fila in tablero)
 
     @staticmethod
     def encontrar_pares(tablero):
+        """Devuelve un dict de pares válidos (dos ocurrencias) por símbolo."""
         pares = {}
         filas = len(tablero)
         cols = len(tablero[0]) if filas > 0 else 0
@@ -45,35 +48,42 @@ class NumberLinkHeuristicSolver:
 
     @staticmethod
     def contar_posiciones_borde(pos1, pos2, filas, cols):
-        def esta_en_borde(fila, col):
-            return fila == 0 or fila == filas - 1 or col == 0 or col == cols - 1
-
+        """Cuenta cuántos extremos caen en el borde del tablero."""
         count = 0
-        if esta_en_borde(pos1[0], pos1[1]):
+        if NumberLinkHeuristicSolver.esta_en_borde(pos1[0], pos1[1], filas, cols):
             count += 1
-        if esta_en_borde(pos2[0], pos2[1]):
+        if NumberLinkHeuristicSolver.esta_en_borde(pos2[0], pos2[1], filas, cols):
             count += 1
         return count
 
     @staticmethod
+    def esta_en_borde(fila, col, filas, cols):
+        """Indica si una celda está en el borde exterior del tablero."""
+        return fila == 0 or fila == filas - 1 or col == 0 or col == cols - 1
+
+    @staticmethod
     def calcular_distancia_manhattan(pos1, pos2):
+        """Distancia Manhattan entre dos posiciones."""
         return abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1])
 
     @staticmethod
     def contar_esquinas(pos1, pos2, filas, cols):
-        def es_esquina(fila, col):
-            return ((fila == 0 or fila == filas - 1) and
-                    (col == 0 or col == cols - 1))
-
+        """Cuenta cuántos extremos están en esquinas."""
         count = 0
-        if es_esquina(pos1[0], pos1[1]):
+        if NumberLinkHeuristicSolver.es_esquina(pos1[0], pos1[1], filas, cols):
             count += 1
-        if es_esquina(pos2[0], pos2[1]):
+        if NumberLinkHeuristicSolver.es_esquina(pos2[0], pos2[1], filas, cols):
             count += 1
         return count
 
+    @staticmethod
+    def es_esquina(fila, col, filas, cols):
+        """Indica si una celda es una esquina del tablero."""
+        return ((fila == 0 or fila == filas - 1) and (col == 0 or col == cols - 1))
+
     @classmethod
     def ordenar_pares_por_heuristica(cls, tablero):
+        """Ordena pares priorizando esquinas, bordes y distancias cortas."""
         pares = cls.encontrar_pares(tablero)
         filas = len(tablero)
         cols = len(tablero[0]) if filas > 0 else 0
@@ -96,6 +106,7 @@ class NumberLinkHeuristicSolver:
 
     @staticmethod
     def obtener_vecinos(pos, filas, cols):
+        """Retorna vecinos ortogonales dentro del tablero."""
         fila, col = pos
         vecinos = []
         direcciones = [(-1, 0), (1, 0), (0, -1), (0, 1)]
@@ -109,39 +120,40 @@ class NumberLinkHeuristicSolver:
 
     @classmethod
     def encontrar_todos_caminos(cls, tablero_trabajo, inicio, fin, numero, max_caminos=None):
+        """Enumera caminos posibles entre dos extremos, ordenados por longitud."""
         limite = max_caminos if max_caminos is not None else cls.MAX_CAMINOS_PAR
         filas = len(tablero_trabajo)
         cols = len(tablero_trabajo[0])
         todos_caminos = []
-
-        def dfs(pos_actual, camino, visitados):
-            if len(todos_caminos) >= limite:
-                return
-
-            if pos_actual == fin:
-                todos_caminos.append(list(camino))
-                return
-
-            for vecino in cls.obtener_vecinos(pos_actual, filas, cols):
-                if vecino in visitados:
-                    continue
-
-                celda = tablero_trabajo[vecino[0]][vecino[1]]
-
-                if celda == ' ' or vecino == fin:
-                    visitados.add(vecino)
-                    camino.append(vecino)
-                    dfs(vecino, camino, visitados)
-                    camino.pop()
-                    visitados.remove(vecino)
-
-        visitados_inicial = {inicio}
-        dfs(inicio, [inicio], visitados_inicial)
+        cls._dfs_rutas(tablero_trabajo, fin, filas, cols, limite, inicio, [inicio], {inicio}, todos_caminos)
         todos_caminos.sort(key=lambda c: len(c))
         return todos_caminos
 
     @classmethod
+    def _dfs_rutas(cls, tablero, fin, filas, cols, limite, pos_actual, camino, visitados, todos_caminos):
+        """DFS auxiliar para construir rutas completas."""
+        if len(todos_caminos) >= limite:
+            return
+
+        if pos_actual == fin:
+            todos_caminos.append(list(camino))
+            return
+
+        for vecino in cls.obtener_vecinos(pos_actual, filas, cols):
+            if vecino in visitados:
+                continue
+
+            celda = tablero[vecino[0]][vecino[1]]
+            if celda == ' ' or vecino == fin:
+                visitados.add(vecino)
+                camino.append(vecino)
+                cls._dfs_rutas(tablero, fin, filas, cols, limite, vecino, camino, visitados, todos_caminos)
+                camino.pop()
+                visitados.remove(vecino)
+
+    @classmethod
     def generar_caminos_incremental(cls, tablero_trabajo, inicio, fin, max_caminos=None):
+        """Generador BFS que produce primero las rutas más cortas."""
         limite = max_caminos if max_caminos is not None else cls.MAX_CAMINOS_PAR
         filas = len(tablero_trabajo)
         cols = len(tablero_trabajo[0])
@@ -166,6 +178,7 @@ class NumberLinkHeuristicSolver:
 
     @staticmethod
     def marcar_camino(tablero, camino, numero):
+        """Pinta el camino en el tablero salvo en los extremos."""
         for i, pos in enumerate(camino):
             if i == 0 or i == len(camino) - 1:
                 continue
@@ -173,6 +186,7 @@ class NumberLinkHeuristicSolver:
 
     @staticmethod
     def desmarcar_camino(tablero, camino, numero):
+        """Borra un camino previamente pintado."""
         for i, pos in enumerate(camino):
             if i == 0 or i == len(camino) - 1:
                 continue
@@ -180,6 +194,7 @@ class NumberLinkHeuristicSolver:
 
     @staticmethod
     def _recolectar_extremos(pares_restantes):
+        """Devuelve el conjunto de extremos pendientes."""
         extremos = set()
         for _, p1, p2 in pares_restantes:
             extremos.add(p1)
@@ -188,10 +203,12 @@ class NumberLinkHeuristicSolver:
 
     @staticmethod
     def _es_transitable(tablero, extremos, pos):
+        """Indica si una celda puede ser parte de un camino."""
         return tablero[pos[0]][pos[1]] == ' ' or pos in extremos
 
     @classmethod
     def _bfs_component(cls, tablero, comp_id, inicio, comp_idx, extremos, filas, cols):
+        """Explora una componente de celdas transitables y resume libres/extremos."""
         q = deque([inicio])
         comp_id[inicio[0]][inicio[1]] = comp_idx
         libres = 0
@@ -214,6 +231,7 @@ class NumberLinkHeuristicSolver:
 
     @classmethod
     def analizar_componentes(cls, tablero, pares_restantes):
+        """Valida componentes: paridad de extremos y conectividad de cada par."""
         if not pares_restantes:
             return True
 
@@ -243,6 +261,7 @@ class NumberLinkHeuristicSolver:
 
     @classmethod
     def detectar_cuellos(cls, tablero, pares_restantes):
+        """Detecta celdas libres de grado 0/1 (no extremos) que anulan la solución."""
         if not pares_restantes:
             return False
 
@@ -264,6 +283,7 @@ class NumberLinkHeuristicSolver:
 
     @classmethod
     def existe_camino_basico(cls, tablero, inicio, fin):
+        """Comprueba conectividad simple entre dos extremos mediante BFS."""
         filas = len(tablero)
         cols = len(tablero[0])
         visitados = set([inicio])
@@ -284,6 +304,7 @@ class NumberLinkHeuristicSolver:
 
     @classmethod
     def hay_camino_para_pares(cls, tablero, pares):
+        """Valida que cada par pendiente conserve al menos un camino alcanzable."""
         for _, pos1, pos2 in pares[:cls.MAX_CAMINOS_CHECK]:
             if not cls.existe_camino_basico(tablero, pos1, pos2):
                 return False
@@ -291,10 +312,11 @@ class NumberLinkHeuristicSolver:
 
     @classmethod
     def obtener_candidatos_pares(cls, tablero, pares, max_candidatos=None, max_caminos=None):
+        """Selecciona pares más restringidos y sus rutas candidatas, usando tablero de memoización."""
         max_candidatos = max_candidatos if max_candidatos is not None else cls.MAX_CANDIDATOS_PARES
         max_caminos = max_caminos if max_caminos is not None else cls.MAX_CAMINOS_PAR
         clave_tablero = cls.tablero_a_clave(tablero)
-        cache_tablero = cls.mem_tablero.setdefault(clave_tablero, {})
+        cache_tablero = cls.MEMO_TABLERO.setdefault(clave_tablero, {})
         opciones = []
 
         for idx, (numero, p1, p2) in enumerate(pares):
@@ -314,6 +336,7 @@ class NumberLinkHeuristicSolver:
 
     @classmethod
     def resolver_numberlink_backtracking(cls, tablero_original, verbose=True, max_caminos_por_par=None):
+        """Backtracking guiado que prueba caminos por pares hasta completar el tablero."""
         tablero = copy.deepcopy(tablero_original)
         pares_ordenados = cls.ordenar_pares_por_heuristica(tablero_original)
         limite = max_caminos_por_par if max_caminos_por_par is not None else cls.MAX_CAMINOS_PAR
@@ -324,34 +347,7 @@ class NumberLinkHeuristicSolver:
 
         intentos = [0]
 
-        def backtrack(pares_restantes):
-            intentos[0] += 1
-
-            if not pares_restantes:
-                return all(' ' not in fila for fila in tablero)
-
-            candidatos = cls.obtener_candidatos_pares(tablero, pares_restantes, max_candidatos=cls.MAX_CANDIDATOS_PARES, max_caminos=limite)
-            if not candidatos:
-                return False
-
-            for idx_sel, caminos in candidatos:
-                if verbose and len(pares_restantes) == len(pares_ordenados):
-                    print(f"Conectando '{pares_restantes[idx_sel][0]}': {len(caminos)} caminos candidatos")
-
-                numero, _, _ = pares_restantes[idx_sel]
-                restantes = pares_restantes[:idx_sel] + pares_restantes[idx_sel + 1:]
-
-                for camino in caminos[:limite]:
-                    cls.marcar_camino(tablero, camino, numero)
-                    if (not cls.detectar_cuellos(tablero, restantes) and
-                            cls.analizar_componentes(tablero, restantes) and
-                            cls.hay_camino_para_pares(tablero, restantes)):
-                        if backtrack(restantes):
-                            return True
-                    cls.desmarcar_camino(tablero, camino, numero)
-            return False
-
-        if backtrack(pares_ordenados):
+        if cls._backtrack(tablero, pares_ordenados, pares_ordenados, intentos, limite, verbose):
             if verbose:
                 print(f"\n✓ Solución encontrada en {intentos[0]} intentos")
             return tablero, True
@@ -360,8 +356,38 @@ class NumberLinkHeuristicSolver:
             print(f"\n✗ No se encontró solución después de {intentos[0]} intentos")
         return tablero, False
 
+    @classmethod
+    def _backtrack(cls, tablero, pares_restantes, pares_ordenados, intentos, limite, verbose):
+        """Recursión principal que intenta conectar pares con podas agresivas."""
+        intentos[0] += 1
+
+        if not pares_restantes:
+            return all(' ' not in fila for fila in tablero)
+
+        candidatos = cls.obtener_candidatos_pares(tablero, pares_restantes, max_candidatos=cls.MAX_CANDIDATOS_PARES, max_caminos=limite)
+        if not candidatos:
+            return False
+
+        for idx_sel, caminos in candidatos:
+            if verbose and len(pares_restantes) == len(pares_ordenados):
+                print(f"Conectando '{pares_restantes[idx_sel][0]}': {len(caminos)} caminos candidatos")
+
+            numero, _, _ = pares_restantes[idx_sel]
+            restantes = pares_restantes[:idx_sel] + pares_restantes[idx_sel + 1:]
+
+            for camino in caminos[:limite]:
+                cls.marcar_camino(tablero, camino, numero)
+                if (not cls.detectar_cuellos(tablero, restantes) and
+                        cls.analizar_componentes(tablero, restantes) and
+                        cls.hay_camino_para_pares(tablero, restantes)):
+                    if cls._backtrack(tablero, restantes, pares_ordenados, intentos, limite, verbose):
+                        return True
+                cls.desmarcar_camino(tablero, camino, numero)
+        return False
+
     @staticmethod
     def imprimir_tablero(tablero):
+        """Imprime el tablero en formato legible."""
         for fila in tablero:
             print(''.join(fila))
 
