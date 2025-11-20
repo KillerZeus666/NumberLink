@@ -81,7 +81,7 @@ class NumberLinkHeuristicSolver:
         """Indica si una celda es una esquina del tablero."""
         return ((fila == 0 or fila == filas - 1) and (col == 0 or col == cols - 1))
 
-    @classmethod #FUNCION GRANDE QUE SI VA (1)
+    @classmethod #FUNCION GRANDE QUE SI VA (1) Melissa 
     def ordenar_pares_por_heuristica(cls, tablero): # esta si 
         """Ordena pares priorizando esquinas, bordes y distancias cortas."""
         pares = cls.encontrar_pares(tablero)
@@ -130,7 +130,7 @@ class NumberLinkHeuristicSolver:
         return todos_caminos
 
     @classmethod
-    #SEGUNDA FUNCION GRANDE QUE SI VA (2)
+    #SEGUNDA FUNCION GRANDE QUE SI VA (2) Melissa
     def _dfs_rutas(cls, tablero, fin, filas, cols, limite, pos_actual, camino, visitados, todos_caminos): # esta si 
         """DFS auxiliar para construir rutas completas."""
         if len(todos_caminos) >= limite:
@@ -153,7 +153,7 @@ class NumberLinkHeuristicSolver:
                 visitados.remove(vecino)
 
     @classmethod
-    # TERCERA FUNCION GRANDE QUE SI VA (3)
+    # TERCERA FUNCION GRANDE QUE SI VA (3) Melissa
     def generar_caminos_incremental(cls, tablero_trabajo, inicio, fin, max_caminos=None): # esta si 
         """Generador BFS que produce primero las rutas más cortas."""
         limite = max_caminos if max_caminos is not None else cls.MAX_CAMINOS_PAR
