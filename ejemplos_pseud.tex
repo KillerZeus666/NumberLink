@@ -59,6 +59,97 @@ ejemplos pseudocodigo
 \end{algorithm}
 
 \begin{algorithm}[H]
+\caption{Verificar si todas las celdas de un símbolo forman una ruta continua}
+\begin{algorithmic}[1]
+\Procedure{RutaConectada}{$tablero, simbolo, posiciones$}
+    \State $inicio \gets posiciones[1]$
+    \State $visitado \gets \{\,inicio\,\}$
+    \State $q \gets [inicio]$
+    \State $filas \gets |tablero|$, $columnas \gets |tablero[0]|$
+    \State $dirs \gets [(-1,0),(1,0),(0,-1),(0,1)]$
+
+    \While{$q \neq \emptyset$}
+        \State $(i,j) \gets$ extraer frente de $q$
+        \For{$di,dj$ \textbf{in} $dirs$}
+            \State $ni \gets i + di$, $nj \gets j + dj$
+            \If{$1 \le ni \le filas$ \textbf{and} $1 \le nj \le columnas$}
+                \If{$tablero[ni][nj] = simbolo$ \textbf{and} $(ni,nj) \notin visitado$}
+                    \State $visitado \gets ni,nj$ 
+                    \State $q \gets ni,nj$
+                \EndIf
+            \EndIf
+        \EndFor
+    \EndWhile
+
+    \State \Return $\left| visitado \right| = \left| posiciones \right|$
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}[H]
+\caption{Calcular el grado (vecinos con mismo símbolo) de una celda}
+\begin{algorithmic}[1]
+\Procedure{Grado}{$tablero, i, j$}
+    \State $filas \gets |tablero|$
+    \State $columnas \gets |tablero[0]|$
+    \State $simbolo \gets tablero[i][j]$
+    \State $g \gets 0$
+    \State $dirs \gets [(-1,0), (1,0), (0,-1), (0,1)]$ \Comment{arriba, abajo, izq, der}
+
+    \For{$di,dj$ \textbf{in} $dirs$}
+        \State $ni \gets i + di$
+        \State $nj \gets j + dj$
+        \If{$1 \le ni \le filas$ \textbf{and} $1 \le nj \le columnas$}
+            \If{$tablero[ni][nj] = simbolo$}
+                \State $g \gets g + 1$
+            \EndIf
+        \EndIf
+    \EndFor
+
+    \State \Return $g$
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}[H]
+\caption{Verificar grados, extremos y continuidad de todas las rutas}
+\begin{algorithmic}[1]
+\Procedure{VerificarTablero}{$tablero$}
+    \State $rutas \gets$ \Call{ObtenerRutas}{$tablero$}
+
+    \For{$simbolo, posiciones$ \textbf{in} $rutas$}
+        \If{$|posiciones| < 2$}
+            \State \Return false \Comment{ruta sin ambos extremos}
+        \EndIf
+
+        \State $grados \gets [\,]$
+        \State $extremos \gets 0$
+        \For{$i,j$ \textbf{in} $posiciones$}
+            \State $g \gets$ \Call{Grado}{$tablero, i, j$}
+            \State $grados \gets g$
+            \If{$g = 1$}
+                \State $extremos \gets extremos + 1$
+            \ElsIf{$g > 2$}
+                \State \Return false \Comment{intersección detectada}
+            \EndIf
+        \EndFor
+
+        \If{$extremos \neq 2$}
+            \State \Return false \Comment{cada ruta debe tener exactamente 2 extremos}
+        \EndIf
+
+        \If{\textbf{not} \Call{RutaConectada}{$tablero, simbolo, posiciones$}}
+            \State \Return false \Comment{celdas del símbolo no forman camino continuo}
+        \EndIf
+    \EndFor
+
+    \State \Return true \Comment{todas las rutas válidas}
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+
+\begin{algorithm}[H]
 \caption{Function \textsc{ConvertBaseDACInverse}$(n, b)$}
 \begin{algorithmic}[1]
 \Require $n > 0$, base $b$ with $2 \leq b \leq 16$
@@ -142,6 +233,31 @@ ejemplos pseudocodigo
 
     \State Ordenar $P$ de forma descendente según $H$
     \State \Return lista $(k,p_1,p_2)$ en el orden definido por $P$
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}[H]
+\caption{Obtener las rutas de un tablero agrupadas por símbolo}
+\begin{algorithmic}[1]
+\Procedure{ObtenerRutas}{$tablero$}
+    \State $rutas \gets$ $[\,]$
+    \State $filas \gets |tablero|$
+    \State $columnas \gets |tablero[0]|$
+
+    \For{$i \gets 1$ \textbf{to} $filas$}
+        \For{$j \gets 1$ \textbf{to} $columnas$}
+            \State $c \gets tablero[i][j]$
+            \If{$c \neq$ espacio en blanco \textbf{and} $c \neq .$}
+                \If{$c \notin rutas$}
+                    \State $rutas[c] \gets [\,]$ \Comment{inicializar la lista para el símbolo}
+                \EndIf
+                \State $rutas[c] \gets i,j$ 
+            \EndIf
+        \EndFor
+    \EndFor
+
+    \State \Return $rutas$
 \EndProcedure
 \end{algorithmic}
 \end{algorithm}
