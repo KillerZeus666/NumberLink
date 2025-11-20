@@ -1,5 +1,5 @@
 Solver: Backtracking Heurístico
-Tiempo: 3.5200 s
+Tiempo: 3.3854 s
 Completado: sí
 
 9996666

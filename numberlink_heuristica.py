@@ -322,16 +322,16 @@ class NumberLinkHeuristicSolver:
         max_candidatos = max_candidatos if max_candidatos is not None else cls.MAX_CANDIDATOS_PARES
         max_caminos = max_caminos if max_caminos is not None else cls.MAX_CAMINOS_PAR
         clave_tablero = cls.tablero_a_clave(tablero) 
-        cache_tablero = cls.MEMO_TABLERO.setdefault(clave_tablero, {})
+        mem_tablero = cls.MEMO_TABLERO.setdefault(clave_tablero, {})
         opciones = []
 
         for idx, (numero, p1, p2) in enumerate(pares):
-            if numero in cache_tablero:
-                caminos = cache_tablero[numero]
+            if numero in mem_tablero:
+                caminos = mem_tablero[numero]
             else:
                 generador = cls.generar_caminos_incremental(tablero, p1, p2, max_caminos=max_caminos) # aca se pone la funcion que se llama para el pseucodigo
                 caminos = list(islice(generador, max_caminos))
-                cache_tablero[numero] = caminos
+                mem_tablero[numero] = caminos
 
             if not caminos:
                 continue
