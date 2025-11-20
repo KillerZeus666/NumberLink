@@ -65,13 +65,15 @@ ejemplos pseudocodigo
     \State $inicio \gets posiciones[1]$
     \State $visitado \gets \{\,inicio\,\}$
     \State $q \gets [inicio]$
-    \State $filas \gets |tablero|$, $columnas \gets |tablero[0]|$
+    \State $filas \gets |tablero|$
+    \State $columnas \gets |tablero[0]|$
     \State $dirs \gets [(-1,0),(1,0),(0,-1),(0,1)]$
 
     \While{$q \neq \emptyset$}
         \State $(i,j) \gets$ extraer frente de $q$
         \For{$di,dj$ \textbf{in} $dirs$}
-            \State $ni \gets i + di$, $nj \gets j + dj$
+            \State $ni \gets i + di$
+            \State $nj \gets j + dj$
             \If{$1 \le ni \le filas$ \textbf{and} $1 \le nj \le columnas$}
                 \If{$tablero[ni][nj] = simbolo$ \textbf{and} $(ni,nj) \notin visitado$}
                     \State $visitado \gets ni,nj$ 
