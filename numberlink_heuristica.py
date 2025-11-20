@@ -105,7 +105,7 @@ class NumberLinkHeuristicSolver:
         return [(num, p1, p2) for num, p1, p2, _ in pares_con_prioridad]
 
     @staticmethod
-    def obtener_vecinos(pos, filas, cols): # esta si pero en _dfs_rutas y en generar_caminos_incremental y en detectar_cuellos y en _bfs_component y en existe_camino_basico
+    def obtener_vecinos(pos, filas, cols): # esta si pero en _dfs_rutas y en generar_caminos_incremental y en detectar_cuellos y en _bfs_component y en existe_camino_basico, kt 
         """Retorna vecinos ortogonales dentro del tablero."""
         fila, col = pos
         vecinos = []
@@ -195,7 +195,7 @@ class NumberLinkHeuristicSolver:
             tablero[pos[0]][pos[1]] = ' '
 
     @staticmethod
-    def _recolectar_extremos(pares_restantes): # esta si pero en analizar_componentes  y detectar_cuellos Simón
+    def _recolectar_extremos(pares_restantes): # esta si pero en analizar_componentes  y detectar_cuellos Simón, Kt funcion 6
         """Devuelve el conjunto de extremos pendientes."""
         extremos = set()
         for _, p1, p2 in pares_restantes:
@@ -204,12 +204,12 @@ class NumberLinkHeuristicSolver:
         return extremos
 
     @staticmethod
-    def _es_transitable(tablero, extremos, pos): # esta si pero en _bfs_component
+    def _es_transitable(tablero, extremos, pos): # esta si pero en _bfs_component, Kt 
         """Indica si una celda puede ser parte de un camino."""
         return tablero[pos[0]][pos[1]] == ' ' or pos in extremos
 
     @classmethod
-    # CUARTA FUNCION GRANDE QUE SI VA (4)
+    # CUARTA FUNCION GRANDE QUE SI VA (4) Kt 
     def _bfs_component(cls, tablero, comp_id, inicio, comp_idx, extremos, filas, cols): # esta si 
         """Explora una componente de celdas transitables y resume libres/extremos."""
         q = deque([inicio])
@@ -264,7 +264,7 @@ class NumberLinkHeuristicSolver:
         return True
 
     @classmethod
-    # SEXTA FUNCION GRANDE QUE SI VA (6)
+    # SEXTA FUNCION GRANDE QUE SI VA (6) Kt
     def detectar_cuellos(cls, tablero, pares_restantes): # esta si
         """Detecta celdas libres de grado 0/1 (no extremos) que anulan la solución."""
         if not pares_restantes:
@@ -287,9 +287,10 @@ class NumberLinkHeuristicSolver:
         return False
 
     @classmethod
-    # SEPTIMA FUNCION GRANDE QUE SI VA (7)
+    # SEPTIMA FUNCION GRANDE QUE SI VA (7), kt 
     def existe_camino_basico(cls, tablero, inicio, fin): # esta si 
         """Comprueba conectividad simple entre dos extremos mediante BFS."""
+        
         filas = len(tablero)
         cols = len(tablero[0])
         visitados = set([inicio])
