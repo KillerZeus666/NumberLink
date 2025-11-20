@@ -179,7 +179,7 @@ class NumberLinkHeuristicSolver:
                     cola.append(camino + [vecino])
 
     @staticmethod
-    def marcar_camino(tablero, camino, numero): # esta si pero en _backtrack
+    def marcar_camino(tablero, camino, numero): # esta si pero en _backtrack Simón
         """Pinta el camino en el tablero salvo en los extremos."""
         for i, pos in enumerate(camino):
             if i == 0 or i == len(camino) - 1:
@@ -187,7 +187,7 @@ class NumberLinkHeuristicSolver:
             tablero[pos[0]][pos[1]] = numero.lower()
 
     @staticmethod
-    def desmarcar_camino(tablero, camino, numero): # esta si pero en _backtrack
+    def desmarcar_camino(tablero, camino, numero): # esta si pero en _backtrack Simón
         """Borra un camino previamente pintado."""
         for i, pos in enumerate(camino):
             if i == 0 or i == len(camino) - 1:
@@ -195,7 +195,7 @@ class NumberLinkHeuristicSolver:
             tablero[pos[0]][pos[1]] = ' '
 
     @staticmethod
-    def _recolectar_extremos(pares_restantes): # esta si pero en analizar_componentes y detectar_cuellos
+    def _recolectar_extremos(pares_restantes): # esta si pero en analizar_componentes  y detectar_cuellos Simón
         """Devuelve el conjunto de extremos pendientes."""
         extremos = set()
         for _, p1, p2 in pares_restantes:
@@ -233,7 +233,7 @@ class NumberLinkHeuristicSolver:
         return {"libres": libres, "extremos": extremos_comp}
 
     @classmethod
-    # QUINTA FUNCION GRANDE QUE SI VA (5)
+    # QUINTA FUNCION GRANDE QUE SI VA (5) Simón
     def analizar_componentes(cls, tablero, pares_restantes):
         """Valida componentes: paridad de extremos y conectividad de cada par."""
         if not pares_restantes:
@@ -309,7 +309,7 @@ class NumberLinkHeuristicSolver:
         return False
 
     @classmethod
-    def hay_camino_para_pares(cls, tablero, pares): # esta si pero en _backtrack
+    def hay_camino_para_pares(cls, tablero, pares): # esta si pero en _backtrack Simón
         """Valida que cada par pendiente conserve al menos un camino alcanzable."""
         for _, pos1, pos2 in pares[:cls.MAX_CAMINOS_CHECK]:
             if not cls.existe_camino_basico(tablero, pos1, pos2): # aca se pone la funcion que se llama para el pseucodigo
@@ -341,7 +341,7 @@ class NumberLinkHeuristicSolver:
         return [(idx, caminos) for _, idx, caminos in opciones[:max_candidatos]]
 
     @classmethod
-    # OCTAVA FUNCION GRANDE QUE SI VA (8)
+    # OCTAVA FUNCION GRANDE QUE SI VA (8) Simón
     def resolver_numberlink_backtracking(cls, tablero_original, verbose=True, max_caminos_por_par=None): # esta si
         """Backtracking guiado que prueba caminos por pares hasta completar el tablero."""
         tablero = copy.deepcopy(tablero_original)
@@ -364,7 +364,7 @@ class NumberLinkHeuristicSolver:
         return tablero, False
 
     @classmethod
-    def _backtrack(cls, tablero, pares_restantes, pares_ordenados, intentos, limite, verbose): # esta si pero en resolver_numberlink_backtracking
+    def _backtrack(cls, tablero, pares_restantes, pares_ordenados, intentos, limite, verbose): # esta si pero en resolver_numberlink_backtracking Simón
         """Recursión principal que intenta conectar pares con podas agresivas."""
         intentos[0] += 1
 
