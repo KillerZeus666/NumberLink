@@ -25,12 +25,12 @@ class NumberLinkHeuristicSolver:
     MEMO_TABLERO = {}
 
     @staticmethod
-    def tablero_a_clave(tablero):
+    def tablero_a_clave(tablero): # esta no
         """Convierte el tablero en una cadena lineal para usar como clave del tablero de memoización."""
         return ''.join(''.join(fila) for fila in tablero)
 
     @staticmethod
-    def encontrar_pares(tablero):
+    def encontrar_pares(tablero): # esta si 
         """Devuelve un dict de pares válidos (dos ocurrencias) por símbolo."""
         pares = {}
         filas = len(tablero)
@@ -47,10 +47,10 @@ class NumberLinkHeuristicSolver:
         return {k: v for k, v in pares.items() if len(v) == 2}
 
     @staticmethod
-    def contar_posiciones_borde(pos1, pos2, filas, cols):
+    def contar_posiciones_borde(pos1, pos2, filas, cols): # esta si pero en ordenar_pares_por_heuristica
         """Cuenta cuántos extremos caen en el borde del tablero."""
         count = 0
-        if NumberLinkHeuristicSolver.esta_en_borde(pos1[0], pos1[1], filas, cols):
+        if NumberLinkHeuristicSolver.esta_en_borde(pos1[0], pos1[1], filas, cols): # aca se pone la funcion que se llama para el pseucodigo 
             count += 1
         if NumberLinkHeuristicSolver.esta_en_borde(pos2[0], pos2[1], filas, cols):
             count += 1
@@ -62,15 +62,15 @@ class NumberLinkHeuristicSolver:
         return fila == 0 or fila == filas - 1 or col == 0 or col == cols - 1
 
     @staticmethod
-    def calcular_distancia_manhattan(pos1, pos2):
+    def calcular_distancia_manhattan(pos1, pos2): # esta si pero en ordenar_pares_por_heuristica
         """Distancia Manhattan entre dos posiciones."""
         return abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1])
 
     @staticmethod
-    def contar_esquinas(pos1, pos2, filas, cols):
+    def contar_esquinas(pos1, pos2, filas, cols): # esta si pero en ordenar_pares_por_heuristica
         """Cuenta cuántos extremos están en esquinas."""
         count = 0
-        if NumberLinkHeuristicSolver.es_esquina(pos1[0], pos1[1], filas, cols):
+        if NumberLinkHeuristicSolver.es_esquina(pos1[0], pos1[1], filas, cols):# aca se pone la funcion que se llama para el pseucodigo
             count += 1
         if NumberLinkHeuristicSolver.es_esquina(pos2[0], pos2[1], filas, cols):
             count += 1
@@ -81,8 +81,8 @@ class NumberLinkHeuristicSolver:
         """Indica si una celda es una esquina del tablero."""
         return ((fila == 0 or fila == filas - 1) and (col == 0 or col == cols - 1))
 
-    @classmethod
-    def ordenar_pares_por_heuristica(cls, tablero):
+    @classmethod #FUNCION GRANDE QUE SI VA (1)
+    def ordenar_pares_por_heuristica(cls, tablero): # esta si 
         """Ordena pares priorizando esquinas, bordes y distancias cortas."""
         pares = cls.encontrar_pares(tablero)
         filas = len(tablero)
@@ -93,7 +93,7 @@ class NumberLinkHeuristicSolver:
         for numero, posiciones in pares.items():
             pos1, pos2 = posiciones
 
-            bordes = cls.contar_posiciones_borde(pos1, pos2, filas, cols)
+            bordes = cls.contar_posiciones_borde(pos1, pos2, filas, cols) # aca se pone la funcion que se llama para el pseucodigo
             esquinas = cls.contar_esquinas(pos1, pos2, filas, cols)
             distancia = cls.calcular_distancia_manhattan(pos1, pos2)
 
@@ -105,7 +105,7 @@ class NumberLinkHeuristicSolver:
         return [(num, p1, p2) for num, p1, p2, _ in pares_con_prioridad]
 
     @staticmethod
-    def obtener_vecinos(pos, filas, cols):
+    def obtener_vecinos(pos, filas, cols): # esta si pero en _dfs_rutas y en generar_caminos_incremental y en detectar_cuellos y en _bfs_component y en existe_camino_basico
         """Retorna vecinos ortogonales dentro del tablero."""
         fila, col = pos
         vecinos = []
@@ -119,7 +119,7 @@ class NumberLinkHeuristicSolver:
         return vecinos
 
     @classmethod
-    def encontrar_todos_caminos(cls, tablero_trabajo, inicio, fin, numero, max_caminos=None):
+    def encontrar_todos_caminos(cls, tablero_trabajo, inicio, fin, numero, max_caminos=None): # esta si pero en generar_caminos_incremental
         """Enumera caminos posibles entre dos extremos, ordenados por longitud."""
         limite = max_caminos if max_caminos is not None else cls.MAX_CAMINOS_PAR
         filas = len(tablero_trabajo)
@@ -130,7 +130,8 @@ class NumberLinkHeuristicSolver:
         return todos_caminos
 
     @classmethod
-    def _dfs_rutas(cls, tablero, fin, filas, cols, limite, pos_actual, camino, visitados, todos_caminos):
+    #SEGUNDA FUNCION GRANDE QUE SI VA (2)
+    def _dfs_rutas(cls, tablero, fin, filas, cols, limite, pos_actual, camino, visitados, todos_caminos): # esta si 
         """DFS auxiliar para construir rutas completas."""
         if len(todos_caminos) >= limite:
             return
@@ -139,7 +140,7 @@ class NumberLinkHeuristicSolver:
             todos_caminos.append(list(camino))
             return
 
-        for vecino in cls.obtener_vecinos(pos_actual, filas, cols):
+        for vecino in cls.obtener_vecinos(pos_actual, filas, cols): # aca se pone la funcion que se llama para el pseucodigo
             if vecino in visitados:
                 continue
 
@@ -147,12 +148,13 @@ class NumberLinkHeuristicSolver:
             if celda == ' ' or vecino == fin:
                 visitados.add(vecino)
                 camino.append(vecino)
-                cls._dfs_rutas(tablero, fin, filas, cols, limite, vecino, camino, visitados, todos_caminos)
+                cls._dfs_rutas(tablero, fin, filas, cols, limite, vecino, camino, visitados, todos_caminos) # aca se pone la funcion que se llama para el pseucodigo
                 camino.pop()
                 visitados.remove(vecino)
 
     @classmethod
-    def generar_caminos_incremental(cls, tablero_trabajo, inicio, fin, max_caminos=None):
+    # TERCERA FUNCION GRANDE QUE SI VA (3)
+    def generar_caminos_incremental(cls, tablero_trabajo, inicio, fin, max_caminos=None): # esta si 
         """Generador BFS que produce primero las rutas más cortas."""
         limite = max_caminos if max_caminos is not None else cls.MAX_CAMINOS_PAR
         filas = len(tablero_trabajo)
@@ -169,7 +171,7 @@ class NumberLinkHeuristicSolver:
                 yield camino
                 continue
 
-            for vecino in cls.obtener_vecinos(pos_actual, filas, cols):
+            for vecino in cls.obtener_vecinos(pos_actual, filas, cols): # aca se pone la funcion que se llama para el pseucodigo
                 if vecino in camino:
                     continue
                 celda = tablero_trabajo[vecino[0]][vecino[1]]
@@ -177,7 +179,7 @@ class NumberLinkHeuristicSolver:
                     cola.append(camino + [vecino])
 
     @staticmethod
-    def marcar_camino(tablero, camino, numero):
+    def marcar_camino(tablero, camino, numero): # esta si pero en _backtrack
         """Pinta el camino en el tablero salvo en los extremos."""
         for i, pos in enumerate(camino):
             if i == 0 or i == len(camino) - 1:
@@ -185,7 +187,7 @@ class NumberLinkHeuristicSolver:
             tablero[pos[0]][pos[1]] = numero.lower()
 
     @staticmethod
-    def desmarcar_camino(tablero, camino, numero):
+    def desmarcar_camino(tablero, camino, numero): # esta si pero en _backtrack
         """Borra un camino previamente pintado."""
         for i, pos in enumerate(camino):
             if i == 0 or i == len(camino) - 1:
@@ -193,7 +195,7 @@ class NumberLinkHeuristicSolver:
             tablero[pos[0]][pos[1]] = ' '
 
     @staticmethod
-    def _recolectar_extremos(pares_restantes):
+    def _recolectar_extremos(pares_restantes): # esta si pero en analizar_componentes y detectar_cuellos
         """Devuelve el conjunto de extremos pendientes."""
         extremos = set()
         for _, p1, p2 in pares_restantes:
@@ -202,12 +204,13 @@ class NumberLinkHeuristicSolver:
         return extremos
 
     @staticmethod
-    def _es_transitable(tablero, extremos, pos):
+    def _es_transitable(tablero, extremos, pos): # esta si pero en _bfs_component
         """Indica si una celda puede ser parte de un camino."""
         return tablero[pos[0]][pos[1]] == ' ' or pos in extremos
 
     @classmethod
-    def _bfs_component(cls, tablero, comp_id, inicio, comp_idx, extremos, filas, cols):
+    # CUARTA FUNCION GRANDE QUE SI VA (4)
+    def _bfs_component(cls, tablero, comp_id, inicio, comp_idx, extremos, filas, cols): # esta si 
         """Explora una componente de celdas transitables y resume libres/extremos."""
         q = deque([inicio])
         comp_id[inicio[0]][inicio[1]] = comp_idx
@@ -220,31 +223,32 @@ class NumberLinkHeuristicSolver:
                 extremos_comp += 1
             elif tablero[i][j] == ' ':
                 libres += 1
-            for ni, nj in cls.obtener_vecinos((i, j), filas, cols):
+            for ni, nj in cls.obtener_vecinos((i, j), filas, cols): # aca se pone la funcion que se llama para el pseucodigo
                 if comp_id[ni][nj] != -1:
                     continue
-                if cls._es_transitable(tablero, extremos, (ni, nj)):
+                if cls._es_transitable(tablero, extremos, (ni, nj)): # aca se pone la funcion que se llama para el pseucodigo
                     comp_id[ni][nj] = comp_idx
                     q.append((ni, nj))
 
         return {"libres": libres, "extremos": extremos_comp}
 
     @classmethod
+    # QUINTA FUNCION GRANDE QUE SI VA (5)
     def analizar_componentes(cls, tablero, pares_restantes):
         """Valida componentes: paridad de extremos y conectividad de cada par."""
         if not pares_restantes:
             return True
 
         filas, cols = len(tablero), len(tablero[0])
-        extremos = cls._recolectar_extremos(pares_restantes)
+        extremos = cls._recolectar_extremos(pares_restantes) # aca se pone la funcion que se llama para el pseucodigo
         comp_id = [[-1] * cols for _ in range(filas)]
         comp_info = []
         comp_idx = 0
 
         for i in range(filas):
             for j in range(cols):
-                if comp_id[i][j] == -1 and cls._es_transitable(tablero, extremos, (i, j)):
-                    comp_info.append(cls._bfs_component(tablero, comp_id, (i, j), comp_idx, extremos, filas, cols))
+                if comp_id[i][j] == -1 and cls._es_transitable(tablero, extremos, (i, j)): # aca se pone la funcion que se llama para el pseucodigo
+                    comp_info.append(cls._bfs_component(tablero, comp_id, (i, j), comp_idx, extremos, filas, cols)) # aca se pone la funcion que se llama para el pseucodigo
                     comp_idx += 1
 
         for info in comp_info:
@@ -260,13 +264,14 @@ class NumberLinkHeuristicSolver:
         return True
 
     @classmethod
-    def detectar_cuellos(cls, tablero, pares_restantes):
+    # SEXTA FUNCION GRANDE QUE SI VA (6)
+    def detectar_cuellos(cls, tablero, pares_restantes): # esta si
         """Detecta celdas libres de grado 0/1 (no extremos) que anulan la solución."""
         if not pares_restantes:
             return False
 
         filas, cols = len(tablero), len(tablero[0])
-        extremos = cls._recolectar_extremos(pares_restantes)
+        extremos = cls._recolectar_extremos(pares_restantes) #aca se pone la funcion que se llama para el pseucodigo
 
         for i in range(filas):
             for j in range(cols):
@@ -274,7 +279,7 @@ class NumberLinkHeuristicSolver:
                     continue
 
                 vecinos_libres = 0
-                for ni, nj in cls.obtener_vecinos((i, j), filas, cols):
+                for ni, nj in cls.obtener_vecinos((i, j), filas, cols): # aca se pone la funcion que se llama para el pseucodigo
                     if tablero[ni][nj] == ' ' or (ni, nj) in extremos:
                         vecinos_libres += 1
                 if vecinos_libres <= 1:
@@ -282,7 +287,8 @@ class NumberLinkHeuristicSolver:
         return False
 
     @classmethod
-    def existe_camino_basico(cls, tablero, inicio, fin):
+    # SEPTIMA FUNCION GRANDE QUE SI VA (7)
+    def existe_camino_basico(cls, tablero, inicio, fin): # esta si 
         """Comprueba conectividad simple entre dos extremos mediante BFS."""
         filas = len(tablero)
         cols = len(tablero[0])
@@ -293,7 +299,7 @@ class NumberLinkHeuristicSolver:
             i, j = cola.popleft()
             if (i, j) == fin:
                 return True
-            for ni, nj in cls.obtener_vecinos((i, j), filas, cols):
+            for ni, nj in cls.obtener_vecinos((i, j), filas, cols): # aca se pone la funcion que se llama para el pseucodigo
                 if (ni, nj) in visitados:
                     continue
                 celda = tablero[ni][nj]
@@ -303,19 +309,19 @@ class NumberLinkHeuristicSolver:
         return False
 
     @classmethod
-    def hay_camino_para_pares(cls, tablero, pares):
+    def hay_camino_para_pares(cls, tablero, pares): # esta si pero en _backtrack
         """Valida que cada par pendiente conserve al menos un camino alcanzable."""
         for _, pos1, pos2 in pares[:cls.MAX_CAMINOS_CHECK]:
-            if not cls.existe_camino_basico(tablero, pos1, pos2):
+            if not cls.existe_camino_basico(tablero, pos1, pos2): # aca se pone la funcion que se llama para el pseucodigo
                 return False
         return True
 
     @classmethod
-    def obtener_candidatos_pares(cls, tablero, pares, max_candidatos=None, max_caminos=None):
+    def obtener_candidatos_pares(cls, tablero, pares, max_candidatos=None, max_caminos=None): # esta si pero en _backtrack
         """Selecciona pares más restringidos y sus rutas candidatas, usando tablero de memoización."""
         max_candidatos = max_candidatos if max_candidatos is not None else cls.MAX_CANDIDATOS_PARES
         max_caminos = max_caminos if max_caminos is not None else cls.MAX_CAMINOS_PAR
-        clave_tablero = cls.tablero_a_clave(tablero)
+        clave_tablero = cls.tablero_a_clave(tablero) 
         cache_tablero = cls.MEMO_TABLERO.setdefault(clave_tablero, {})
         opciones = []
 
@@ -323,7 +329,7 @@ class NumberLinkHeuristicSolver:
             if numero in cache_tablero:
                 caminos = cache_tablero[numero]
             else:
-                generador = cls.generar_caminos_incremental(tablero, p1, p2, max_caminos=max_caminos)
+                generador = cls.generar_caminos_incremental(tablero, p1, p2, max_caminos=max_caminos) # aca se pone la funcion que se llama para el pseucodigo
                 caminos = list(islice(generador, max_caminos))
                 cache_tablero[numero] = caminos
 
@@ -335,10 +341,11 @@ class NumberLinkHeuristicSolver:
         return [(idx, caminos) for _, idx, caminos in opciones[:max_candidatos]]
 
     @classmethod
-    def resolver_numberlink_backtracking(cls, tablero_original, verbose=True, max_caminos_por_par=None):
+    # OCTAVA FUNCION GRANDE QUE SI VA (8)
+    def resolver_numberlink_backtracking(cls, tablero_original, verbose=True, max_caminos_por_par=None): # esta si
         """Backtracking guiado que prueba caminos por pares hasta completar el tablero."""
         tablero = copy.deepcopy(tablero_original)
-        pares_ordenados = cls.ordenar_pares_por_heuristica(tablero_original)
+        pares_ordenados = cls.ordenar_pares_por_heuristica(tablero_original)# aca se pone la funcion que se llama para el pseucodigo
         limite = max_caminos_por_par if max_caminos_por_par is not None else cls.MAX_CAMINOS_PAR
 
         if verbose:
@@ -347,7 +354,7 @@ class NumberLinkHeuristicSolver:
 
         intentos = [0]
 
-        if cls._backtrack(tablero, pares_ordenados, pares_ordenados, intentos, limite, verbose):
+        if cls._backtrack(tablero, pares_ordenados, pares_ordenados, intentos, limite, verbose): # aca se pone la funcion que se llama para el pseucodigo
             if verbose:
                 print(f"\n✓ Solución encontrada en {intentos[0]} intentos")
             return tablero, True
@@ -357,14 +364,14 @@ class NumberLinkHeuristicSolver:
         return tablero, False
 
     @classmethod
-    def _backtrack(cls, tablero, pares_restantes, pares_ordenados, intentos, limite, verbose):
+    def _backtrack(cls, tablero, pares_restantes, pares_ordenados, intentos, limite, verbose): # esta si pero en resolver_numberlink_backtracking
         """Recursión principal que intenta conectar pares con podas agresivas."""
         intentos[0] += 1
 
         if not pares_restantes:
             return all(' ' not in fila for fila in tablero)
 
-        candidatos = cls.obtener_candidatos_pares(tablero, pares_restantes, max_candidatos=cls.MAX_CANDIDATOS_PARES, max_caminos=limite)
+        candidatos = cls.obtener_candidatos_pares(tablero, pares_restantes, max_candidatos=cls.MAX_CANDIDATOS_PARES, max_caminos=limite) # aca se pone la funcion que se llama para el pseucodigo
         if not candidatos:
             return False
 
@@ -376,13 +383,13 @@ class NumberLinkHeuristicSolver:
             restantes = pares_restantes[:idx_sel] + pares_restantes[idx_sel + 1:]
 
             for camino in caminos[:limite]:
-                cls.marcar_camino(tablero, camino, numero)
-                if (not cls.detectar_cuellos(tablero, restantes) and
-                        cls.analizar_componentes(tablero, restantes) and
-                        cls.hay_camino_para_pares(tablero, restantes)):
-                    if cls._backtrack(tablero, restantes, pares_ordenados, intentos, limite, verbose):
+                cls.marcar_camino(tablero, camino, numero) # aca se pone la funcion que se llama para el pseucodigo
+                if (not cls.detectar_cuellos(tablero, restantes) and # aca se pone la funcion que se llama para el pseucodigo
+                        cls.analizar_componentes(tablero, restantes) and# aca se pone la funcion que se llama para el pseucodigo
+                        cls.hay_camino_para_pares(tablero, restantes)):# aca se pone la funcion que se llama para el pseucodigo
+                    if cls._backtrack(tablero, restantes, pares_ordenados, intentos, limite, verbose):# aca se pone la funcion que se llama para el pseucodigo
                         return True
-                cls.desmarcar_camino(tablero, camino, numero)
+                cls.desmarcar_camino(tablero, camino, numero)# aca se pone la funcion que se llama para el pseucodigo
         return False
 
     @staticmethod
