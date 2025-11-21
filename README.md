@@ -31,9 +31,4 @@ El juego **NumberLink** consiste en conectar pares de símbolos iguales en un ta
   python numberlink_heuristica.py tablerosEntrada/entrada9_2x3.txt
   ```
 
-- `verificar_tablero.py`: valida que un tablero cumpla las reglas (dos extremos por símbolo, sin intersecciones y camino continuo para cada ruta).  
-  ```bash
-  python verificar_tablero.py tablerosSalida/salida9x9.txt
-  ```
-
 Ejecuta cada script desde la carpeta `NumberLink` pasando la ruta del archivo de tablero correspondiente.
