@@ -1,0 +1,12 @@
+Solver: Backtracking Heurístico
+Tiempo: 11.5878 s
+Completado: sí
+
+11111111
+12222221
+14444421
+44555521
+43522221
+43555551
+43311111
+44333333

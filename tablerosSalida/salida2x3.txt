@@ -1,0 +1,6 @@
+Solver: Backtracking Heurístico
+Tiempo: 0.0002 s
+Completado: sí
+
+aaa
+bbb
