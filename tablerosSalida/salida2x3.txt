@@ -1,9 +1,6 @@
 Solver: Backtracking Heurístico
-Tiempo: 0.0008 s
+Tiempo: 0.0002 s
 Completado: sí
 
-11333
-12223
-14443
-15553
-ccc55
+aaa
+bbb

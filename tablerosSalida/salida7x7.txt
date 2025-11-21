@@ -1,11 +1,11 @@
 Solver: Backtracking Heurístico
-Tiempo: 3.6903 s
+Tiempo: 0.0891 s
 Completado: sí
 
-9996666
-93999m6
-9333tm6
-9mmmtm6
-9mtttm6
-9mtmmm6
-9mmm666
+2222222
+2671111
+2671551
+2671351
+2771311
+2333314
+3344444
