@@ -1,0 +1,484 @@
+ejemplos pseudocodigo
+
+\begin{algorithm}[H]
+\begin{algorithmic}[1]
+
+\Require{$b \in \left[2,35\right]$ the numeric base used.}
+\Require{$d \in \left[1,1000000\right]$ the number of digits of $n$.}
+\Require{$n \in \mathbb{N}_b$ a natural number represented in the base $b$.}
+
+\Procedure{FindKaprekarLoopsAndConstants}{$b,d,n$}
+  \State$k\leftarrow n$
+  \State$\mathcal{K}\leftarrow\left<k\right>$
+  \State$stop\leftarrow 0$
+  \While{$stop = 0$}
+    \State$x\leftarrow \text{\Call{SortDigitsDescending}{\ensuremath{k,d}}}$
+    \State$y\leftarrow \text{\Call{SortDigitsAscending}{\ensuremath{k,d}}}$
+    \State$k \leftarrow x~{-}_{b}~y$
+    \If{\text{\Call{Find}{\ensuremath{\mathcal{K},k}}}}
+      \State Remove from $\mathcal{K}$ all elements from the first one up to $k$.
+      \State$stop\leftarrow 1$
+    \Else
+      \State$\mathcal{K}\leftarrow\mathcal{K}\bigcup\left<k\right>$
+    \EndIf
+  \EndWhile
+  \State\Return$\mathcal{K}$
+\EndProcedure
+
+\end{algorithmic}
+\caption{Algoritmo para encontrar ciclos y constantes de Kaprekar.}
+\end{algorithm}
+
+\begin{algorithm}[H]
+\caption{Function \textsc{ConvertBaseInverse}$(n, b)$: exhaustive conversion of an integer $n$ to base $b$ in reverse order}
+\begin{algorithmic}[1]
+\Require $n > 0$, a base $b$ with $2 \leq b \leq 16$
+\Ensure Sequence $R$ of length $d$, where $d = \lfloor \log_b(n) \rfloor + 1$
+\Statex
+
+\Function{ConvertBaseInverse}{$n, b$}
+    \State $d \gets \lfloor \dfrac{\ln(n)}{\ln(b)} \rfloor + 1$ 
+    \Comment{Cantidad de dígitos en base $b$}
+    
+    \State Create a sequence $R$ of size $d$ 
+    \Comment{Arreglo de salida}
+    
+    \State $j \gets 1$ 
+    \Comment{Índice del arreglo, comenzando desde 1}
+    
+    \For{$i \gets 0$ \textbf{to} $d-1$}
+        \State $R[j] \gets \Big( \lfloor \dfrac{n}{b^i} \rfloor \Big) \bmod b$
+        \Comment{Calcular y guardar el dígito, usando truncamiento hacia el inferior}
+        \State $j \gets j + 1$
+    \EndFor
+
+    \State \Return $R$ 
+    \Comment{Secuencia de $n$ en base $b$, en orden inverso}
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}[H]
+\caption{Verificar si todas las celdas de un símbolo forman una ruta continua}
+\begin{algorithmic}[1]
+\Procedure{RutaConectada}{$tablero, simbolo, posiciones$}
+    \State $inicio \gets posiciones[1]$
+    \State $visitado \gets \{\,inicio\,\}$
+    \State $q \gets [inicio]$
+    \State $filas \gets |tablero|$
+    \State $columnas \gets |tablero[0]|$
+    \State $dirs \gets [(-1,0),(1,0),(0,-1),(0,1)]$
+
+    \While{$q \neq \emptyset$}
+        \State $(i,j) \gets$ extraer frente de $q$
+        \For{$di,dj$ \textbf{in} $dirs$}
+            \State $ni \gets i + di$
+            \State $nj \gets j + dj$
+            \If{$1 \le ni \le filas$ \textbf{and} $1 \le nj \le columnas$}
+                \If{$tablero[ni][nj] = simbolo$ \textbf{and} $(ni,nj) \notin visitado$}
+                    \State $visitado \gets ni,nj$ 
+                    \State $q \gets ni,nj$
+                \EndIf
+            \EndIf
+        \EndFor
+    \EndWhile
+
+    \State \Return $\left| visitado \right| = \left| posiciones \right|$
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}[H]
+\caption{Calcular el grado (vecinos con mismo símbolo) de una celda}
+\begin{algorithmic}[1]
+\Procedure{Grado}{$tablero, i, j$}
+    \State $filas \gets |tablero|$
+    \State $columnas \gets |tablero[0]|$
+    \State $simbolo \gets tablero[i][j]$
+    \State $g \gets 0$
+    \State $dirs \gets [(-1,0), (1,0), (0,-1), (0,1)]$ \Comment{arriba, abajo, izq, der}
+
+    \For{$di,dj$ \textbf{in} $dirs$}
+        \State $ni \gets i + di$
+        \State $nj \gets j + dj$
+        \If{$1 \le ni \le filas$ \textbf{and} $1 \le nj \le columnas$}
+            \If{$tablero[ni][nj] = simbolo$}
+                \State $g \gets g + 1$
+            \EndIf
+        \EndIf
+    \EndFor
+
+    \State \Return $g$
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}[H]
+\caption{Verificar grados, extremos y continuidad de todas las rutas}
+\begin{algorithmic}[1]
+\Procedure{VerificarTablero}{$tablero$}
+    \State $rutas \gets$ \Call{ObtenerRutas}{$tablero$}
+
+    \For{$simbolo, posiciones$ \textbf{in} $rutas$}
+        \If{$|posiciones| < 2$}
+            \State \Return false \Comment{ruta sin ambos extremos}
+        \EndIf
+
+        \State $grados \gets [\,]$
+        \State $extremos \gets 0$
+        \For{$i,j$ \textbf{in} $posiciones$}
+            \State $g \gets$ \Call{Grado}{$tablero, i, j$}
+            \State $grados \gets g$
+            \If{$g = 1$}
+                \State $extremos \gets extremos + 1$
+            \ElsIf{$g > 2$}
+                \State \Return false \Comment{intersección detectada}
+            \EndIf
+        \EndFor
+
+        \If{$extremos \neq 2$}
+            \State \Return false \Comment{cada ruta debe tener exactamente 2 extremos}
+        \EndIf
+
+        \If{\textbf{not} \Call{RutaConectada}{$tablero, simbolo, posiciones$}}
+            \State \Return false \Comment{celdas del símbolo no forman camino continuo}
+        \EndIf
+    \EndFor
+
+    \State \Return true \Comment{todas las rutas válidas}
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+
+\begin{algorithm}[H]
+\caption{Function \textsc{ConvertBaseDACInverse}$(n, b)$}
+\begin{algorithmic}[1]
+\Require $n > 0$, base $b$ with $2 \leq b \leq 16$
+\Ensure Sequence $R$ of digits of $n$ in base $b$, in reverse order (LSD $\to$ MSD)
+
+\Function{ConvertBaseDACInverse}{$n, b$}
+    \If{$n < b$}
+        \State \Return $[n]$ \Comment{caso base: un solo dígito ya está en inverso}
+    \EndIf
+
+    \State $d \gets \lfloor \log_b(n) \rfloor + 1$ \Comment{cantidad total de dígitos}
+    \State $m \gets \lfloor d/2 \rfloor$ \Comment{mitad de los dígitos}
+
+    \State $high \gets \lfloor n / b^m \rfloor$ \Comment{parte alta (más significativa)}
+    \State $low  \gets n \bmod b^m$ \Comment{parte baja (menos significativa)}
+
+    \State $H \gets$ \Call{ConvertBaseDACInverse}{$high, b$}
+    \State $L \gets$ \Call{ConvertBaseDACInverse}{$low, b$}
+
+    \If{$length(L) < m$}
+        \For{$k \gets 1$ \textbf{to} $m - length(L)$}
+            \State $L \gets L \cup [0]$ \Comment{agregar ceros al FINAL en inverso}
+        \EndFor
+    \EndIf
+
+    \State \Return $L \cup H$ \Comment{en inverso: primero low, luego high}
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}[H]
+\caption{Function \textsc{Palindrome Subsequence Count BU}$(S)$}
+\begin{algorithmic}[1]
+\Require $S$, alphabetic sequence
+\Function{PSC\_BU}{$S$}
+    \State $n \gets |S|$
+    \If{$n = 0$}
+        \State \Return $0$
+    \EndIf
+    \State \textbf{let} $M[1..n][1..n] \gets 0$
+    \For{$i \gets 1$ \textbf{to} $n$}
+        \State $M[i][i] \gets 1$
+    \EndFor
+
+    \For{$\ell \gets 2$ \textbf{to} $n$}
+        \For{$i \gets 1$ \textbf{to} $n - \ell + 1$}
+            \State $j \gets i + \ell - 1$
+            \If{$S[i] = S[j]$}
+                \State $M[i][j] \gets M[i+1][j] + M[i][j-1] + 1$
+            \Else
+                \State $cross \gets 0$
+                \If{$i+1 \le j-1$}
+                    \State $cross \gets M[i+1][j-1]$
+                \EndIf
+                \State $M[i][j] \gets M[i+1][j] + M[i][j-1] - cross$
+            \EndIf
+        \EndFor
+    \EndFor
+
+    \State \Return $M[1][n]$
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}[H]
+\caption{OrdenarParesPorHeurística}
+\begin{algorithmic}[1]
+\Procedure{OrdenarParesPorHeurística}{$T$}
+    \State $pares \gets$ \Call{EncontrarPares}{$T$}
+    \State $P \gets [\,]$
+    \State $n \gets$ número de filas de $T$
+    \State $m \gets$ número de columnas de $T$
+
+    \For{\textbf{each} $(k, (p_1,p_2))$ \textbf{in} $pares$}
+        \State $E \gets$ \Call{ContarEsquinas}{$p_1, p_2, n, m$}
+        \State $B \gets$ \Call{ContarBordes}{$p_1, p_2, n, m$}
+        \State $d \gets$ \Call{DistanciaManhattan}{$p_1, p_2$}
+        \State $H \gets 1000E + 100B + (100 - d)$
+        \State Añadir $(k,p_1,p_2,H)$ a $P$
+    \EndFor
+
+    \State Ordenar $P$ de forma descendente según $H$
+    \State \Return lista $(k,p_1,p_2)$ en el orden definido por $P$
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}[H]
+\caption{Obtener las rutas de un tablero agrupadas por símbolo}
+\begin{algorithmic}[1]
+\Procedure{ObtenerRutas}{$tablero$}
+    \State $rutas \gets$ $[\,]$
+    \State $filas \gets |tablero|$
+    \State $columnas \gets |tablero[0]|$
+
+    \For{$i \gets 1$ \textbf{to} $filas$}
+        \For{$j \gets 1$ \textbf{to} $columnas$}
+            \State $c \gets tablero[i][j]$
+            \If{$c \neq$ espacio en blanco \textbf{and} $c \neq .$}
+                \If{$c \notin rutas$}
+                    \State $rutas[c] \gets [\,]$ \Comment{inicializar la lista para el símbolo}
+                \EndIf
+                \State $rutas[c] \gets i,j$ 
+            \EndIf
+        \EndFor
+    \EndFor
+
+    \State \Return $rutas$
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+
+\begin{algorithm}[H]
+\caption{DFS\_Rutas}
+\begin{algorithmic}[1]
+\Procedure{DFS\_Rutas}{$T, fin, n, m, L, pos, camino, visitados, C$}
+    \If{$|C| \geq L$}
+        \State \Return
+    \EndIf
+
+    \If{$pos = fin$}
+        \State Añadir copia de $camino$ a $C$
+        \State \Return
+    \EndIf
+
+    \For{\textbf{each} $v$ \textbf{in} \Call{ObtenerVecinos}{$pos,n,m$}}
+        \If{$v \in visitados$}
+            \State \textbf{continue}
+        \EndIf
+
+        \If{$T[v] = \text{vacío}$ \textbf{or} $v = fin$}
+            \State Añadir $v$ a $visitados$
+            \State Añadir $v$ a $camino$
+            \State \Call{DFS\_Rutas}{$T, fin, n, m, L, v, camino, visitados, C$}
+            \State Eliminar último elemento de $camino$
+            \State Quitar $v$ de $visitados$
+        \EndIf
+    \EndFor
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}[H]
+\caption{GenerarCaminosIncremental}
+\begin{algorithmic}[1]
+\Procedure{GenerarCaminosIncremental}{$T, inicio, fin, L$}
+    \State $n \gets$ filas de $T$
+    \State $m \gets$ columnas de $T$
+    \State $cola \gets$ lista con $[inicio]$
+    \State $c \gets 0$
+
+    \While{$cola \neq \emptyset$ \textbf{and} $c < L$}
+        \State $camino \gets$ extraer primero de $cola$
+        \State $pos \gets$ último elemento de $camino$
+
+        \If{$pos = fin$}
+            \State $c \gets c+1$
+            \State \Yield $camino$
+            \State \textbf{continue}
+        \EndIf
+
+        \For{\textbf{each} $v$ \textbf{in} \Call{ObtenerVecinos}{$pos,n,m$}}
+            \If{$v \notin camino$}
+                \If{$T[v] = \text{vacío}$ \textbf{or} $v = fin$}
+                    \State Encolar $camino + v$ en $cola$
+                \EndIf
+            \EndIf
+        \EndFor
+    \EndWhile
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+\begin{comment}
+analizar_componentes
+- _recolectar_extremos
+\end{comment}
+
+\begin{algorithm}[H]
+\caption{Validar paridad de extremos y conectividad de cada par}
+\footnotesize
+\begin{algorithmic}[1]
+\Procedure{AnalizarComponentes}{$tablero, paresRestantes$}
+    \If{$|paresRestantes| = 0$}
+        \State \Return true \Comment{Tablero válido sin pares}
+    \EndIf
+    
+    \State $filas \gets |tablero|$, $columnas \gets |tablero[0]|$
+    \State $extremos \gets$ \Call{RecolectarExtremos}{$paresRestantes$}
+    \State $comp_{id} \gets$ matriz $filas \times columnas$ con $-1$
+    \State $comp_{info} \gets [\,]$ \Comment{Libres y extremos por componente}
+    \State $idx \gets 0$
+    
+    \For{$i \gets 1$ \textbf{to} $filas$}
+        \For{$j \gets 1$ \textbf{to} $columnas$}
+            \If{$comp\_id[i][j] = -1$ \textbf{and} \Call{Transitable}{$tablero, extremos, i, j$}}
+                \State $info \gets$ \Call{BFS}{$tablero, comp\_id, i,j, idx, extremos$}
+                \State $comp_{info}[j] \gets info$
+                \State $idx \gets idx + 1$
+            \EndIf
+        \EndFor
+    \EndFor
+    
+    \Comment{Validar paridad y presencia de extremos}
+    \For{$info$ \textbf{in} $comp_{info}$}
+        \If{$info.libres > 0$ \textbf{and} $info.extremos = 0$}
+            \State \Return false \Comment{Hueco aislado}
+        \EndIf
+        \If{$info.extremos$ es impar}
+            \State \Return false \Comment{Paridad inválida}
+        \EndIf
+    \EndFor
+    
+    \Comment{Verificar conectividad de pares}
+    \For{$p_1, p_2 $ \textbf{in} $paresRestantes$}
+        \If{$comp\_id[p_1.fila][p_1.col] \neq comp\_id[p_2.fila][p_2.col]$}
+            \State \Return false
+        \EndIf
+    \EndFor
+    
+    \State \Return true
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}[H]
+\caption{Obtener las parejas de extremos por unir}
+\begin{algorithmic}[1]
+\Procedure{RecolectarExtremos}{$pares$}
+    \State $extremos \gets [\,]$
+    \For{$i \gets 1$ \textbf{to} $\left| pares \right|$}
+        \State $p_1,p_2 \gets pares[i]$ \Comment{coordenadas de los extremos}
+        \State $extremos[i] \gets p_1$
+        \State $extremos[i] \gets p_2$
+    \EndFor
+    \State \Return $extremos$
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+\begin{comment}
+resolver_numberlink_backtracking
+- marcar_camino
+- desmarcar_camino
+- hay_camino_para_pares
+- obtener_candidatos_pares
+- _backtrack
+\end{comment}
+
+\begin{algorithm}[H]
+\caption{Marcar un camino en el tablero}
+\begin{algorithmic}[1]
+\Procedure{MarcarCamino}{$tablero, camino, simbolo$}
+    \For{$k \gets 1$ \textbf{to} $|camino|$}
+        \If{$k = 1$ \textbf{or} $k = |camino|$}
+            \State \textbf{continue} \Comment{Omitir extremos}
+        \EndIf
+        \State $i,j \gets camino[k]$ \Comment{Coordenadas de la celda interna (1-indexado)}
+        \State $tablero[i][j] \gets simbolo$
+    \EndFor
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}[H]
+\caption{Desmarcar un camino del tablero}
+\begin{algorithmic}[1]
+\Procedure{DesmarcarCamino}{$tablero, camino$}
+    \For{$k \gets 1$ \textbf{to} $|camino|$}
+        \If{$k = 1$ \textbf{or} $k = |camino|$}
+            \State \textbf{continue} \Comment{Omitir extremos}
+        \EndIf
+        \State $i,j \gets camino[k]$ \Comment{Coordenadas de celda interna}
+        \State $tablero[i][j] \gets$ espacio en blanco
+    \EndFor
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}[H]
+\caption{Verificar conectividad básica para todos los pares}
+\begin{algorithmic}[1]
+\Procedure{HayCaminoParaPares}{$tablero, pares$}
+    \For{$k \gets 1$ \textbf{to} $|pares|$}
+        \State $p_1, p_2 \gets pares[k]$ \Comment{Extremos del par}
+        \If{\textbf{not} \Call{ExisteCaminoBasico}{$tablero, p_1, p_2$}}
+            \State \Return false \Comment{Algún par quedó desconectado}
+        \EndIf
+    \EndFor
+    \State \Return true
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}[H]
+\caption{Backtracking guiado con podas}
+\begin{algorithmic}[1]
+\footnotesize
+\Procedure{Backtrack}{$tab, pRest, tPares, intent, lim, verb$}
+    \State $intent \gets intent + 1$ \Comment{contador de intentos}
+    \If{$|pRest| = 0$}
+        \State \Return \Call{TableroLleno}{$tab$}
+    \EndIf
+    \State $cand \gets$ \Call{ObtenerCandidatosPares}{$tab, pRest, MAX\_CAND, lim$} \Comment{pares más restringidos}
+    \If{$|cand| = 0$}
+        \State \Return false
+    \EndIf
+    \For{$c \gets 1$ \textbf{to} $|cand|$}
+        \State $idx, caminos \gets cand[c]$ \Comment{índice del par y sus rutas}
+        \State $sim, p_1, p_2 \gets pRest[idx]$ \Comment{símbolo y extremos del par}
+        \State $rest \gets pRest$ sin el elemento en $idx$ \Comment{pares restantes tras conectar éste}
+        \State $limCam \gets \min(lim, |caminos|)$ \Comment{cuántas rutas probar como máximo}
+        \For{$k \gets 1$ \textbf{to} $limCam$}
+            \State $cam \gets caminos[k]$ \Comment{ruta candidata}
+            \State \Call{MarcarCamino}{$tab, cam, sim$}
+            \If{\textbf{not} \Call{DetectarCuellos}{$tab, rest$} \textbf{and}
+                 \Call{AnalizarComponentes}{$tab, rest$} \textbf{and}
+                 \Call{HayCaminoParaPares}{$tab, rest$}}
+                \If{\Call{Backtrack}{$tab, rest, tPares, intent, lim, verb$}}
+                    \State \Return true
+                \EndIf
+            \EndIf
+            \State \Call{DesmarcarCamino}{$tab, cam, sim$}
+        \EndFor
+    \EndFor
+    \State \Return false
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}

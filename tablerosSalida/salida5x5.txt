@@ -1,0 +1,9 @@
+Solver: Backtracking Heurístico
+Tiempo: 0.0016 s
+Completado: sí
+
+11333
+12223
+14443
+15553
+ccc55
